@@ -1,0 +1,51 @@
+disease,has_structured_data,has_nlp_data,has_precautions,sample_count
+cystitis,True,False,False,1219
+vulvodynia,True,False,False,1218
+nose disorder,True,False,False,1218
+complex regional pain syndrome,True,False,False,1217
+spondylosis,True,False,False,1216
+hypoglycemia,True,False,True,1215
+conjunctivitis due to allergy,True,False,False,1215
+vaginal cyst,True,False,False,1215
+esophagitis,True,False,False,1215
+peripheral nerve disorder,True,False,False,1215
+gastrointestinal hemorrhage,True,False,False,1214
+diverticulitis,True,False,False,1214
+acute bronchitis,True,False,False,1213
+infectious gastroenteritis,True,False,False,1212
+pneumonia,True,True,True,1212
+fungal infection of the hair,True,False,False,1212
+sprain or strain,True,False,False,1212
+spontaneous abortion,True,False,False,1212
+gout,True,False,False,1211
+marijuana abuse,True,False,False,1210
+arthritis of the hip,True,False,False,1210
+strep throat,True,False,False,1210
+injury to the arm,True,False,False,1209
+liver disease,True,False,False,1209
+bursitis,True,False,False,1208
+acute pancreatitis,True,False,False,1207
+spinal stenosis,True,False,False,1207
+eczema,True,False,False,1207
+injury to the leg,True,False,False,1206
+noninfectious gastroenteritis,True,False,False,1206
+benign prostatic hyperplasia bph,True,False,False,1206
+acute bronchiolitis,True,False,False,1204
+cholecystitis,True,False,False,1204
+anxiety,True,False,False,1198
+obstructive sleep apnea osa,True,False,False,1196
+concussion,True,False,False,1191
+dental caries,True,False,False,1185
+pyogenic skin infection,True,False,False,834
+stye,True,False,False,832
+idiopathic excessive menstruation,True,False,False,832
+depression,True,False,False,830
+acute sinusitis,True,False,False,828
+herniated disk,True,False,False,828
+chronic constipation,True,False,False,827
+angina,True,False,False,826
+psoriasis,True,True,True,825
+multiple sclerosis,True,False,False,825
+developmental disability,True,False,False,825
+conjunctivitis,True,False,False,825
+sepsis,True,False,False,824
