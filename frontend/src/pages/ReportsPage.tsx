@@ -3,79 +3,163 @@
  * Diagnosis history and report management
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FileText,
   Calendar,
   TrendingUp,
-  Trash2,
   Eye,
   Download,
+  RefreshCw,
 } from "lucide-react";
 import { useDiagnosisStore } from "@/store/diagnosisStore";
 import { formatDateTime, formatConfidence } from "@/utils/formatters";
 import EmptyState from "@/components/common/EmptyState";
 import { ROUTES } from "@/constants";
 import reportApi from "@/api/reportApi";
-import ReportViewer from "@/components/reports/ReportViewer";
 import ErrorAlert from "@/components/common/ErrorAlert";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
-import type { ReportData } from "@/types";
+import type { DiagnosisResponse } from "@/types";
 
 const ReportsPage = () => {
   const navigate = useNavigate();
-  const { diagnosisHistory, clearHistory, setCurrentDiagnosis } =
-    useDiagnosisStore();
-  const [showClearConfirm, setShowClearConfirm] = useState(false);
-  const [activeReport, setActiveReport] = useState<ReportData | null>(null);
+  const { setCurrentDiagnosis } = useDiagnosisStore();
+  
+  // State for database reports
+  const [dbReports, setDbReports] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [reportLoading, setReportLoading] = useState(false);
   const [reportError, setReportError] = useState<string | null>(null);
 
-  const handleClearHistory = () => {
-    clearHistory();
-    setShowClearConfirm(false);
+  // Fetch reports from database on mount
+  useEffect(() => {
+    fetchReports();
+  }, []);
+
+  const fetchReports = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await reportApi.getHistory({ limit: 100 });
+      
+      if (response && response.data) {
+        setDbReports(response.data.history || []);
+      }
+    } catch (err: any) {
+      console.error("Failed to fetch reports:", err);
+      setError("Failed to load report history. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleGenerateReport = async (reportId: string) => {
-    const entry = diagnosisHistory.find((item) => item.id === reportId);
-    if (!entry) return;
+  const handleViewDetails = (session: any) => {
+    // Reconstruct diagnosis object for viewing - must match DiagnosisResponse structure
+    const diagnosis: DiagnosisResponse = {
+      success: true,
+      message: "Diagnosis retrieved from history",
+      data: {
+        success: true,
+        top_predictions: session.predictions || [],
+        explainability: {
+          matched_symptoms: session.extracted_symptoms?.filter((s: any) => s.matched_in_model).map((s: any) => s.symptom_name) || [],
+          unmatched_symptoms: session.extracted_symptoms?.filter((s: any) => !s.matched_in_model).map((s: any) => s.symptom_name) || [],
+          important_features: [],
+        },
+        rule_engine_flags: session.rule_alerts || [],
+        patient_analysis: {
+          severity: session.overall_severity || "unknown",
+          risk_level: session.risk_level || "unknown",
+          symptoms_processed: session.symptoms_processed || 0,
+          symptoms_matched: session.symptoms_matched || 0,
+        },
+      },
+      timestamp: session.created_at,
+    };
+    
+    setCurrentDiagnosis(diagnosis);
+    navigate(ROUTES.RESULTS);
+  };
 
-    if (!entry.patientInfo) {
-      setReportError("Patient information is required to generate a report.");
-      return;
-    }
-
+  const handleDownloadPDF = async (session: any) => {
     try {
       setReportError(null);
       setReportLoading(true);
+      
+      // Prepare data for PDF generation - must match DiagnosisData structure
+      const diagnosisData = {
+        success: true,
+        top_predictions: session.predictions || [],
+        explainability: {
+          matched_symptoms: session.extracted_symptoms?.filter((s: any) => s.matched_in_model).map((s: any) => s.symptom_name) || [],
+          unmatched_symptoms: session.extracted_symptoms?.filter((s: any) => !s.matched_in_model).map((s: any) => s.symptom_name) || [],
+          important_features: [],
+        },
+        rule_engine_flags: session.rule_alerts || [],
+        patient_analysis: {
+          severity: session.overall_severity || "unknown",
+          risk_level: session.risk_level || "unknown",
+          symptoms_processed: session.symptoms_processed || 0,
+          symptoms_matched: session.symptoms_matched || 0,
+        },
+      };
+      
+      const patientInfo = {
+        age: session.patient?.age || 0,
+        gender: session.patient?.gender || "unknown",
+        patient_id: session.patient?.patient_id,
+      };
+      
       const response = await reportApi.generate({
-        diagnosis_result: entry.diagnosis.data,
-        patient_info: entry.patientInfo,
-        format: "json",
+        diagnosis_result: diagnosisData,
+        patient_info: patientInfo,
+        format: "pdf",
       });
-      setActiveReport(response.data);
+
+      // If response is a blob (PDF), download it
+      if (response.data instanceof Blob) {
+        const url = URL.createObjectURL(response.data);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `diagnosis_report_${session.session_id}.pdf`;
+        link.click();
+        URL.revokeObjectURL(url);
+      }
     } catch (error) {
-      setReportError("Failed to generate report. Please try again.");
+      console.error("PDF generation error:", error);
+      setReportError("Failed to generate PDF. Please try again.");
     } finally {
       setReportLoading(false);
     }
   };
 
-  const handleDownloadReport = () => {
-    if (!activeReport) return;
-    const blob = new Blob([JSON.stringify(activeReport, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${activeReport.report_id}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-12 flex items-center justify-center">
+        <LoadingSpinner text="Loading report history..." />
+      </div>
+    );
+  }
 
-  if (diagnosisHistory.length === 0) {
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-12">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <ErrorAlert message={error} onClose={() => setError(null)} />
+          <div className="mt-4 text-center">
+            <button onClick={fetchReports} className="btn btn-primary">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (dbReports.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 py-12">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -117,166 +201,115 @@ const ReportsPage = () => {
                 Diagnosis Reports
               </h1>
               <p className="text-gray-600">
-                {diagnosisHistory.length} report
-                {diagnosisHistory.length !== 1 ? "s" : ""} in history
+                {dbReports.length} report{dbReports.length !== 1 ? "s" : ""} in history
               </p>
             </div>
 
             <div className="flex items-center space-x-3 mt-4 md:mt-0">
+              <button
+                onClick={fetchReports}
+                className="btn btn-outline flex items-center"
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Refresh
+              </button>
               <button
                 onClick={() => navigate(ROUTES.DIAGNOSIS)}
                 className="btn btn-primary"
               >
                 New Diagnosis
               </button>
-              <button
-                onClick={() => setShowClearConfirm(true)}
-                className="btn btn-outline text-red-600 hover:bg-red-50"
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Clear History
-              </button>
             </div>
           </div>
         </div>
 
-        {/* Clear Confirmation */}
-        {showClearConfirm && (
-          <div className="card p-6 mb-6 border-red-200 bg-red-50">
-            <h3 className="text-lg font-semibold text-red-900 mb-2">
-              Clear All History?
-            </h3>
-            <p className="text-sm text-red-800 mb-4">
-              This will permanently delete all diagnosis reports. This action
-              cannot be undone.
-            </p>
-            <div className="flex space-x-3">
-              <button
-                onClick={handleClearHistory}
-                className="btn bg-red-600 text-white hover:bg-red-700"
-              >
-                Yes, Clear All
-              </button>
-              <button
-                onClick={() => setShowClearConfirm(false)}
-                className="btn btn-outline"
-              >
-                Cancel
-              </button>
-            </div>
+        {reportError && (
+          <div className="mb-6">
+            <ErrorAlert
+              message={reportError}
+              onClose={() => setReportError(null)}
+            />
           </div>
         )}
 
         {/* Reports Grid */}
         <div className="grid gap-6">
-          {diagnosisHistory.map((report) => (
-            <div key={report.id} className="card card-hover p-6">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-                <div className="flex-1">
-                  <div className="flex items-start space-x-4">
-                    <div className="w-12 h-12 rounded-lg bg-primary-100 flex items-center justify-center flex-shrink-0">
-                      <FileText className="w-6 h-6 text-primary-600" />
-                    </div>
-
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                        {report.topPrediction}
-                      </h3>
-
-                      <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 mb-3">
-                        <span className="flex items-center">
-                          <Calendar className="w-4 h-4 mr-1" />
-                          {formatDateTime(report.timestamp)}
-                        </span>
-                        <span className="flex items-center">
-                          <TrendingUp className="w-4 h-4 mr-1" />
-                          {formatConfidence(report.confidence)} confidence
-                        </span>
+          {dbReports.map((session) => {
+            const topPrediction = session.predictions && session.predictions.length > 0 
+              ? session.predictions[0] 
+              : null;
+            const symptoms = session.extracted_symptoms?.map((s: any) => s.symptom_name) || [];
+            
+            return (
+              <div key={session.id} className="card card-hover p-6">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-start space-x-4">
+                      <div className="w-12 h-12 rounded-lg bg-primary-100 flex items-center justify-center flex-shrink-0">
+                        <FileText className="w-6 h-6 text-primary-600" />
                       </div>
 
-                      <div className="flex flex-wrap gap-2">
-                        {report.symptoms.slice(0, 5).map((symptom, index) => (
-                          <span
-                            key={index}
-                            className="inline-flex items-center px-2.5 py-1 rounded-md bg-gray-100 text-gray-700 text-xs font-medium"
-                          >
-                            {symptom}
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                          {topPrediction?.disease_name || "Diagnosis Session"}
+                        </h3>
+
+                        <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 mb-3">
+                          <span className="flex items-center">
+                            <Calendar className="w-4 h-4 mr-1" />
+                            {formatDateTime(session.created_at)}
                           </span>
-                        ))}
-                        {report.symptoms.length > 5 && (
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-gray-100 text-gray-600 text-xs">
-                            +{report.symptoms.length - 5} more
+                          {topPrediction && (
+                            <span className="flex items-center">
+                              <TrendingUp className="w-4 h-4 mr-1" />
+                              {formatConfidence(topPrediction.confidence_score)} confidence
+                            </span>
+                          )}
+                          <span className="inline-flex items-center px-2 py-1 rounded-md bg-blue-100 text-blue-700 text-xs font-medium">
+                            {session.session_id}
                           </span>
-                        )}
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
+                          {symptoms.slice(0, 5).map((symptom: string, index: number) => (
+                            <span
+                              key={index}
+                              className="inline-flex items-center px-2.5 py-1 rounded-md bg-gray-100 text-gray-700 text-xs font-medium"
+                            >
+                              {symptom}
+                            </span>
+                          ))}
+                          {symptoms.length > 5 && (
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-gray-100 text-gray-600 text-xs">
+                              +{symptoms.length - 5} more
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="flex items-center space-x-3 mt-4 md:mt-0 md:ml-4">
-                  <button
-                    onClick={() => {
-                      setCurrentDiagnosis(report.diagnosis);
-                      navigate(ROUTES.RESULTS);
-                    }}
-                    className="btn btn-outline flex items-center"
-                  >
-                    <Eye className="w-4 h-4 mr-2" />
-                    View Details
-                  </button>
-                  <button
-                    onClick={() => handleGenerateReport(report.id)}
-                    className="btn btn-secondary flex items-center"
-                    disabled={reportLoading}
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Generate Report
-                  </button>
+                  <div className="flex items-center space-x-3 mt-4 md:mt-0 md:ml-4">
+                    <button
+                      onClick={() => handleViewDetails(session)}
+                      className="btn btn-outline flex items-center"
+                    >
+                      <Eye className="w-4 h-4 mr-2" />
+                      View Details
+                    </button>
+                    <button
+                      onClick={() => handleDownloadPDF(session)}
+                      className="btn btn-secondary flex items-center"
+                      disabled={reportLoading}
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Download PDF
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Report Preview */}
-        <div className="mt-10">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">
-              Report Preview
-            </h2>
-            {activeReport && (
-              <button
-                onClick={handleDownloadReport}
-                className="btn btn-outline"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Download JSON
-              </button>
-            )}
-          </div>
-
-          {reportError && (
-            <div className="mb-4">
-              <ErrorAlert
-                message={reportError}
-                onClose={() => setReportError(null)}
-              />
-            </div>
-          )}
-
-          {reportLoading ? (
-            <div className="card p-6">
-              <LoadingSpinner text="Generating report preview..." />
-            </div>
-          ) : activeReport ? (
-            <ReportViewer report={activeReport} />
-          ) : (
-            <div className="card p-6">
-              <p className="text-sm text-gray-600">
-                Select a report to generate a preview.
-              </p>
-            </div>
-          )}
+            );
+          })}
         </div>
       </div>
     </div>

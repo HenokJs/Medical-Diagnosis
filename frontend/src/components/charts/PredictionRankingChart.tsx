@@ -21,9 +21,23 @@ interface PredictionRankingChartProps {
 const PredictionRankingChart = ({
   predictions,
 }: PredictionRankingChartProps) => {
+  // Null safety check
+  if (!predictions || predictions.length === 0) {
+    return (
+      <div className="card p-6">
+        <h3 className="text-lg font-semibold text-primary-dark mb-4">
+          Prediction Ranking
+        </h3>
+        <div className="flex items-center justify-center h-64 text-neutral-500">
+          <p className="text-sm">No prediction data available</p>
+        </div>
+      </div>
+    );
+  }
+
   const data = predictions.slice(0, 5).map((pred) => ({
-    name: pred.disease,
-    confidence: pred.confidence * 100,
+    name: pred?.disease || pred?.disease_name || "Unknown",
+    confidence: (pred?.confidence || pred?.confidence_score || 0) * 100,
   }));
 
   const CustomTooltip = ({ active, payload }: any) => {

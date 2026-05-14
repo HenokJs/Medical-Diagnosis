@@ -19,6 +19,11 @@ const DiagnosisCard = ({
   rank,
   isTopPrediction = false,
 }: DiagnosisCardProps) => {
+  // Null safety checks
+  if (!prediction) {
+    return null;
+  }
+
   const rankColors = {
     1: "border-primary-200 bg-primary-50",
     2: "border-primary-100 bg-primary-50",
@@ -30,6 +35,13 @@ const DiagnosisCard = ({
     2: "bg-primary-500 text-white",
     3: "bg-primary-400 text-white",
   };
+
+  const diseaseName = prediction?.disease || prediction?.disease_name || "Unknown Diagnosis";
+  const confidence = prediction?.confidence || prediction?.confidence_score || 0;
+  const severity = prediction?.severity || "unknown";
+  const description = prediction?.description || null;
+  const precautions = prediction?.precautions || [];
+  const recommendations = prediction?.recommendations || [];
 
   return (
     <div
@@ -50,11 +62,11 @@ const DiagnosisCard = ({
               #{rank}
             </span>
             <h3 className="text-xl font-bold text-primary-dark">
-              {prediction.disease}
+              {diseaseName}
             </h3>
           </div>
           <div className="flex items-center space-x-3">
-            <SeverityBadge severity={prediction.severity} />
+            <SeverityBadge severity={severity} />
             {isTopPrediction && (
               <span className="inline-flex items-center text-xs font-medium text-primary-700">
                 <CheckCircle2 className="w-4 h-4 mr-1" />
@@ -67,28 +79,28 @@ const DiagnosisCard = ({
 
       {/* Confidence Bar */}
       <div className="mb-4">
-        <ConfidenceBar confidence={prediction.confidence} />
+        <ConfidenceBar confidence={confidence} />
       </div>
 
       {/* Description */}
-      {prediction.description && (
+      {description && (
         <div className="mb-4">
           <div className="flex items-start space-x-2">
             <Info className="w-4 h-4 text-primary-600 mt-0.5 flex-shrink-0" />
-            <p className="text-sm text-primary-800">{prediction.description}</p>
+            <p className="text-sm text-primary-800">{description}</p>
           </div>
         </div>
       )}
 
       {/* Precautions */}
-      {prediction.precautions && prediction.precautions.length > 0 && (
+      {precautions && precautions.length > 0 && (
         <div className="mb-4">
           <h4 className="text-sm font-semibold text-primary-dark mb-2 flex items-center">
             <AlertCircle className="w-4 h-4 mr-1 text-primary-600" />
             Precautions
           </h4>
           <ul className="space-y-1">
-            {prediction.precautions.slice(0, 3).map((precaution, index) => (
+            {precautions.slice(0, 3).map((precaution, index) => (
               <li
                 key={index}
                 className="text-sm text-primary-800 flex items-start"
@@ -102,13 +114,13 @@ const DiagnosisCard = ({
       )}
 
       {/* Recommendations */}
-      {prediction.recommendations && prediction.recommendations.length > 0 && (
+      {recommendations && recommendations.length > 0 && (
         <div>
           <h4 className="text-sm font-semibold text-primary-dark mb-2">
             Recommendations
           </h4>
           <ul className="space-y-1">
-            {prediction.recommendations
+            {recommendations
               .slice(0, 3)
               .map((recommendation, index) => (
                 <li

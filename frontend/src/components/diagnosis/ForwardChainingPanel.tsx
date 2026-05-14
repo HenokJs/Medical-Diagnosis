@@ -32,19 +32,34 @@ interface ForwardChainingPanelProps {
 
 const ForwardChainingPanel = ({ 
   chains, 
-  symptoms, 
+  symptoms = [], 
   ruleFlags = [], 
   predictions = [] 
 }: ForwardChainingPanelProps) => {
+  // Null safety checks
+  if (!symptoms || symptoms.length === 0) {
+    return (
+      <div className="card p-6">
+        <h3 className="text-lg font-semibold text-neutral-900 mb-4 flex items-center">
+          <Activity className="w-5 h-5 mr-2 text-primary-blue" />
+          Forward Chaining Inference
+        </h3>
+        <div className="flex items-center justify-center h-64 text-neutral-500">
+          <p className="text-sm">No symptom data available for forward chaining</p>
+        </div>
+      </div>
+    );
+  }
+
   // Build forward chain from available data
-  const triggeredRules = ruleFlags.map(flag => ({
-    rule: flag.rule,
-    message: flag.message,
-    type: flag.type,
-    diseases: predictions.slice(0, 3).map(p => p.disease)
+  const triggeredRules = (ruleFlags || []).map(flag => ({
+    rule: flag?.rule || flag?.name || "Unknown Rule",
+    message: flag?.message || flag?.explanation || "",
+    type: flag?.type || flag?.alert_type || "info",
+    diseases: (predictions || []).slice(0, 3).map(p => p?.disease || p?.disease_name || "Unknown")
   }));
 
-  const possibleDiseases = predictions.slice(0, 3).map(p => p.disease);
+  const possibleDiseases = (predictions || []).slice(0, 3).map(p => p?.disease || p?.disease_name || "Unknown");
 
   return (
     <div className="card p-6">
@@ -140,7 +155,8 @@ const ForwardChainingPanel = ({
           </div>
           <div className="ml-11 space-y-2">
             {possibleDiseases.map((disease, idx) => {
-              const prediction = predictions[idx];
+              const prediction = predictions[idx] || {};
+              const confidence = prediction?.confidence || prediction?.confidence_score || 0;
               return (
                 <div
                   key={idx}
@@ -155,7 +171,7 @@ const ForwardChainingPanel = ({
                     </span>
                   </div>
                   <span className="text-xs font-semibold text-green-700">
-                    {(prediction.confidence * 100).toFixed(1)}%
+                    {(confidence * 100).toFixed(1)}%
                   </span>
                 </div>
               );

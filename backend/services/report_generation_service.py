@@ -96,8 +96,8 @@ class ReportGenerationService:
             'top_3_diagnoses': [
                 {
                     'rank': idx + 1,
-                    'disease': pred['disease'],
-                    'confidence_percentage': round(pred['confidence'] * 100, 1),
+                    'disease': pred.get('disease') or pred.get('disease_name', 'Unknown'),
+                    'confidence_percentage': round(pred.get('confidence', pred.get('confidence_score', 0)) * 100, 1),
                     'severity': pred.get('severity', 'Unknown'),
                     'description': pred.get('description', ''),
                     'matched_symptoms': pred.get('matched_symptoms', [])
@@ -105,8 +105,8 @@ class ReportGenerationService:
                 for idx, pred in enumerate(predictions)
             ],
             'primary_diagnosis': {
-                'disease': predictions[0]['disease'],
-                'confidence': round(predictions[0]['confidence'] * 100, 1),
+                'disease': predictions[0].get('disease') or predictions[0].get('disease_name', 'Unknown'),
+                'confidence': round(predictions[0].get('confidence', predictions[0].get('confidence_score', 0)) * 100, 1),
                 'severity': predictions[0].get('severity', 'Unknown')
             }
         }

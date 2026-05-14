@@ -5,6 +5,9 @@
 export const APP_NAME = "MedAI Diagnosis";
 export const APP_VERSION = "1.0.0";
 
+export const MEDICAL_DISCLAIMER = 
+  "This AI-powered diagnosis tool is for informational purposes only and should not replace professional medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition. Never disregard professional medical advice or delay in seeking it because of something you have read on this platform.";
+
 export const SEVERITY_COLORS = {
   minor: {
     bg: "bg-green-50",
@@ -37,9 +40,6 @@ export const SEVERITY_COLORS = {
     badge: "bg-gray-100 text-gray-800",
   },
 } as const;
-
-export const MEDICAL_DISCLAIMER =
-  "This AI-powered system provides diagnostic suggestions for informational purposes only. It is not a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition.";
 
 export const SYMPTOM_CATEGORIES = [
   "General",

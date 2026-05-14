@@ -1,20 +1,22 @@
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* ============================================
-   PROFESSIONAL MEDICAL DESIGN SYSTEM
+   ELEGANT MEDICAL DESIGN SYSTEM
+   New Color Palette: Cream, Tan, Burgundy, Charcoal
    ============================================ */
 
 @layer base {
   * {
-    @apply border-primary-100;
+    @apply border-gray-200;
   }
 
   body {
-    @apply bg-white text-primary-dark antialiased;
+    @apply bg-cream-50 text-charcoal antialiased;
+    font-family: 'Poppins', sans-serif;
     font-feature-settings: "cv11", "ss01";
   }
 
@@ -24,171 +26,162 @@
   h4,
   h5,
   h6 {
-    @apply font-semibold text-primary-dark;
+    @apply font-semibold text-charcoal;
+    font-family: 'Poppins', sans-serif;
   }
 }
 
 @layer components {
   /* ============================================
-     CARD COMPONENTS - Professional Medical Style
+     CARD COMPONENTS - Elegant Medical Style
      ============================================ */
   .card {
-    @apply bg-white rounded-medical border border-neutral-200 shadow-medical;
+    @apply bg-white rounded-soft border border-tan-200 shadow-soft;
   }
 
   .card-hover {
-    @apply card transition-all duration-200 hover:shadow-medical-lg hover:border-primary-blue;
+    @apply card transition-all duration-300 hover:shadow-medium hover:border-burgundy-300;
   }
 
   /* ============================================
-     BUTTON COMPONENTS - Clinical Professional
+     BUTTON COMPONENTS - Modern Elegant
      ============================================ */
   .btn {
-    @apply px-4 py-2 rounded-medical font-medium transition-all duration-200 
+    @apply px-5 py-2.5 rounded-soft font-medium transition-all duration-200 
            focus:outline-none focus:ring-2 focus:ring-offset-2 
            disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-primary {
-    @apply bg-primary-blue text-white hover:bg-primary-dark 
-           focus:ring-primary-blue shadow-sm;
+    @apply bg-burgundy text-white hover:bg-burgundy-600 
+           focus:ring-burgundy shadow-soft;
   }
 
   .btn-secondary {
-    @apply bg-primary-100 text-primary-dark hover:bg-primary-200 
-        focus:ring-primary-200 shadow-sm;
+    @apply bg-tan text-white hover:bg-tan-600 
+           focus:ring-tan shadow-soft;
   }
 
   .btn-outline {
-    @apply border-2 border-primary-blue text-primary-blue 
-           hover:bg-primary-blue hover:text-white focus:ring-primary-blue;
+    @apply border-2 border-burgundy text-burgundy 
+           hover:bg-burgundy hover:text-white focus:ring-burgundy;
   }
 
   .btn-danger {
-    @apply bg-primary-600 text-white hover:bg-primary-700 
-        focus:ring-primary-600 shadow-sm;
+    @apply bg-error text-white hover:bg-error-600 
+           focus:ring-error shadow-soft;
   }
 
   /* ============================================
-     INPUT COMPONENTS - Professional Forms
+     INPUT COMPONENTS - Elegant Forms
      ============================================ */
   .input {
-    @apply w-full px-4 py-2 border border-neutral-300 rounded-medical
-           focus:outline-none focus:ring-2 focus:ring-primary-blue focus:border-transparent
-           transition-all duration-200 bg-white text-neutral-900
-           placeholder:text-neutral-400;
+    @apply w-full px-4 py-2.5 border border-tan-300 rounded-soft
+           focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent
+           transition-all duration-200 bg-white text-charcoal
+           placeholder:text-gray-400;
   }
 
   .input-error {
-    @apply input border-primary-600 focus:ring-primary-600;
+    @apply input border-error focus:ring-error;
   }
 
   /* ============================================
-     BADGE COMPONENTS - Clinical Indicators
+     BADGE COMPONENTS - Elegant Indicators
      ============================================ */
   .badge {
     @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold;
   }
 
   .badge-minor {
-    @apply bg-primary-50 text-primary-700 border border-primary-200;
+    @apply bg-success-50 text-success-700 border border-success-200;
   }
 
   .badge-moderate {
-    @apply bg-primary-100 text-primary-800 border border-primary-200;
+    @apply bg-warning-50 text-warning-700 border border-warning-200;
   }
 
   .badge-urgent {
-    @apply bg-primary-200 text-primary-900 border border-primary-300;
+    @apply bg-error-50 text-error-700 border border-error-200;
   }
 
   .badge-critical {
-    @apply bg-primary-300 text-primary-900 border border-primary-400;
+    @apply bg-burgundy-50 text-burgundy-700 border border-burgundy-200;
   }
 
   .badge-info {
-    @apply bg-primary-50 text-primary-700 border border-primary-200;
+    @apply bg-info-50 text-info-700 border border-info-200;
   }
 
   /* ============================================
-     ALERT COMPONENTS - Clinical Notifications
+     ALERT COMPONENTS - Elegant Notifications
      ============================================ */
   .alert {
-    @apply p-4 rounded-medical border;
+    @apply p-4 rounded-soft border;
   }
 
   .alert-info {
-    @apply alert bg-primary-50 border-primary-200 text-primary-900;
+    @apply alert bg-info-50 border-info-200 text-info-900;
   }
 
   .alert-success {
-    @apply alert bg-primary-50 border-primary-200 text-primary-900;
+    @apply alert bg-success-50 border-success-200 text-success-900;
   }
 
   .alert-warning {
-    @apply alert bg-primary-100 border-primary-200 text-primary-900;
+    @apply alert bg-warning-50 border-warning-200 text-warning-900;
   }
 
   .alert-danger {
-    @apply alert bg-primary-200 border-primary-300 text-primary-900;
+    @apply alert bg-error-50 border-error-200 text-error-900;
   }
 
   /* ============================================
      MEDICAL SPECIFIC COMPONENTS
      ============================================ */
   .diagnosis-card {
-    @apply card p-6 hover:shadow-medical-lg transition-all duration-200;
+    @apply card p-6 hover:shadow-large transition-all duration-300;
   }
 
   .confidence-bar {
-    @apply h-2 rounded-full bg-primary-100 overflow-hidden;
+    @apply h-2.5 rounded-full bg-tan-100 overflow-hidden;
   }
 
   .confidence-fill {
-    @apply h-full transition-all duration-500 ease-out;
+    @apply h-full transition-all duration-500 ease-out bg-gradient-elegant;
   }
 
   .symptom-tag {
-    @apply inline-flex items-center px-3 py-1 rounded-full text-sm
-           bg-primary-50 text-primary-dark border border-primary-200
-           transition-all duration-200 hover:bg-primary-100;
+    @apply inline-flex items-center px-3 py-1.5 rounded-full text-sm
+           bg-cream text-charcoal border border-tan-300
+           transition-all duration-200 hover:bg-tan-100 hover:border-burgundy-300;
   }
 
   .symptom-tag-matched {
-    @apply symptom-tag bg-primary-100 border-primary-200 text-primary-900;
+    @apply symptom-tag bg-tan-100 border-burgundy-200 text-burgundy-800;
   }
 
   .symptom-tag-extracted {
-    @apply symptom-tag bg-primary-50 border-primary-200 text-primary-900;
+    @apply symptom-tag bg-cream-100 border-tan-200 text-charcoal;
   }
 
   /* ============================================
-     SECTION HEADERS - Professional Typography
+     SECTION HEADERS - Elegant Typography
      ============================================ */
   .section-header {
-    @apply text-2xl font-semibold text-primary-dark mb-4 pb-2 
-           border-b-2 border-primary-300;
+    @apply text-2xl font-display font-bold text-burgundy mb-4 pb-2 
+           border-b-2 border-burgundy-200;
   }
 
   .subsection-header {
-    @apply text-lg font-semibold text-primary-dark mb-3;
+    @apply text-lg font-semibold text-charcoal mb-3;
   }
 
   /* ============================================
      LOADING STATES
      ============================================ */
   .skeleton {
-    @apply bg-primary-100 rounded;
-  }
-
-  @keyframes pulse {
-    0%,
-    100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.5;
-    }
+    @apply bg-tan-100 rounded animate-pulse;
   }
 
   .animate-fade-in {
@@ -197,6 +190,26 @@
 
   .animate-slide-in {
     animation: slideIn 0.4s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideIn {
+    from {
+      transform: translateY(10px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
   }
 
   /* ============================================
@@ -239,7 +252,6 @@
       margin-bottom: 1cm;
     }
 
-    /* Ensure colors print correctly */
     .badge,
     .alert {
       -webkit-print-color-adjust: exact;

@@ -1,10 +1,4 @@
-/**
- * Professional Footer
- * Clean, minimal footer with medical disclaimer
- */
-
-import { AlertCircle } from 'lucide-react';
-import { MEDICAL_DISCLAIMER, APP_VERSION } from '@/constants';
+import { APP_VERSION } from '@/constants';
 
 const Footer = () => {
   return (
@@ -12,17 +6,6 @@ const Footer = () => {
       {/* Medical Disclaimer */}
       <div className="bg-blue-50 border-b border-blue-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-start space-x-3">
-            <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <h3 className="text-sm font-medium text-blue-900 mb-1">
-                Medical Disclaimer
-              </h3>
-              <p className="text-xs text-blue-800 leading-relaxed">
-                {MEDICAL_DISCLAIMER}
-              </p>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -31,7 +14,7 @@ const Footer = () => {
         <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
           <div className="text-center md:text-left">
             <p className="text-sm text-gray-600">
-              © {new Date().getFullYear()} MedAI Diagnosis System
+              © {new Date().getFullYear()} Medical Diagnosis System
             </p>
             <p className="text-xs text-gray-500 mt-1">
               AI-Powered Clinical Decision Support • Version {APP_VERSION}

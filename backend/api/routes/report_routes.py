@@ -1,6 +1,8 @@
-from flask import Blueprint, request, current_app
+from flask import Blueprint, request, current_app, send_file
+import os
 from backend.services.report_generation_service import report_generation_service
 from backend.services.database_service import database_service
+from backend.services.pdf_service import pdf_service
 from backend.api.middleware.validation import validate_report_request
 from backend.utils.response_formatter import ResponseFormatter
 
@@ -22,7 +24,7 @@ def generate_report():
             "gender": "male",
             "patient_id": "P001"
         },
-        "format": "json"  # or "html", "pdf" (future)
+        "format": "json"  # or "pdf"
     }
     """
     try:
@@ -43,6 +45,55 @@ def generate_report():
             patient_info=data['patient_info']
         )
         
+        # Get format
+        report_format = data.get('format', 'json').lower()
+        
+        # Generate PDF if requested
+        if report_format == 'pdf':
+            try:
+                # Prepare data for PDF
+                pdf_data = {
+                    'report_id': report['report_id'],
+                    'generated_at': report['generated_at'],
+                    'patient_info': data['patient_info'],
+                    'diagnosis': {
+                        'severity': data['diagnosis_result']['patient_analysis'].get('severity', 'unknown'),
+                        'risk_level': data['diagnosis_result']['patient_analysis'].get('risk_level', 'unknown'),
+                        'top_predictions': data['diagnosis_result']['top_predictions']
+                    },
+                    'clinical_findings': {
+                        'symptoms': data['diagnosis_result'].get('explainability', {}).get('matched_symptoms', []),
+                        'rule_flags': data['diagnosis_result'].get('rule_engine_flags', [])
+                    },
+                    'recommendation': data['diagnosis_result'].get('recommendation', ''),
+                    'disclaimer': data['diagnosis_result'].get('disclaimer', '')
+                }
+                
+                # Generate PDF in memory (no file storage)
+                pdf_buffer = pdf_service.generate_pdf(pdf_data, output_path=None)
+                
+                if pdf_buffer:
+                    # Update report metadata
+                    report['format'] = 'pdf'
+                    
+                    current_app.logger.info(f"PDF generated in memory: {report['report_id']}")
+                    
+                    # Return PDF directly from memory
+                    from io import BytesIO
+                    return send_file(
+                        BytesIO(pdf_buffer),
+                        mimetype='application/pdf',
+                        as_attachment=True,
+                        download_name=f"{report['report_id']}.pdf"
+                    )
+                else:
+                    current_app.logger.warning("PDF generation failed, falling back to JSON")
+                    report_format = 'json'
+                    
+            except Exception as e:
+                current_app.logger.error(f"PDF generation error: {e}")
+                report_format = 'json'
+        
         # Save to database if available
         try:
             session_id = data['diagnosis_result'].get('session_id')
@@ -50,6 +101,7 @@ def generate_report():
         except Exception as e:
             current_app.logger.warning(f"Failed to save report to database: {e}")
         
+        # Return JSON response (PDF already returned above if requested)
         return ResponseFormatter.success(
             data=report,
             message="Professional clinical report generated successfully"

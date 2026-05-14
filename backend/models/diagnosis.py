@@ -57,6 +57,7 @@ class DiagnosisSession(db.Model):
         }
         
         if include_details:
+            data['patient'] = self.patient.to_dict() if self.patient else None
             data['extracted_symptoms'] = [s.to_dict() for s in self.extracted_symptoms]
             data['predictions'] = [p.to_dict() for p in self.predictions.order_by(DiagnosisPrediction.rank)]
             data['rule_alerts'] = [a.to_dict() for a in self.rule_alerts]

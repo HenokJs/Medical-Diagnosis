@@ -16,15 +16,31 @@ interface ReportViewerProps {
 }
 
 const ReportViewer = ({ report }: ReportViewerProps) => {
+  // Null safety checks
+  if (!report) {
+    return (
+      <div className="card p-6">
+        <p className="text-sm text-neutral-600">No report data available</p>
+      </div>
+    );
+  }
+
+  const patientInfo = report?.patient_info || {};
+  const diagnosis = report?.diagnosis || {};
+  const topPredictions = diagnosis?.top_predictions || [];
+  const clinicalFindings = report?.clinical_findings || {};
+  const symptoms = clinicalFindings?.symptoms || [];
+  const ruleFlags = clinicalFindings?.rule_flags || [];
+
   return (
     <div className="card p-6 print:shadow-none print:border-none">
       <div className="flex items-start justify-between mb-6">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Clinical Report</h2>
-          <p className="text-sm text-gray-600">Report ID: {report.report_id}</p>
+          <p className="text-sm text-gray-600">Report ID: {report?.report_id || "N/A"}</p>
         </div>
         <div className="text-sm text-gray-600">
-          Generated: {formatDateTime(report.generated_at)}
+          Generated: {report?.generated_at ? formatDateTime(report.generated_at) : "N/A"}
         </div>
       </div>
 
@@ -34,14 +50,14 @@ const ReportViewer = ({ report }: ReportViewerProps) => {
             Patient Information
           </h3>
           <div className="text-sm text-gray-700 space-y-1">
-            {report.patient_info.name && (
-              <p>Name: {report.patient_info.name}</p>
+            {patientInfo?.name && (
+              <p>Name: {patientInfo.name}</p>
             )}
-            {report.patient_info.patient_id && (
-              <p>ID: {report.patient_info.patient_id}</p>
+            {patientInfo?.patient_id && (
+              <p>ID: {patientInfo.patient_id}</p>
             )}
-            <p>Age: {report.patient_info.age}</p>
-            <p>Gender: {report.patient_info.gender}</p>
+            <p>Age: {patientInfo?.age || "N/A"}</p>
+            <p>Gender: {patientInfo?.gender || "N/A"}</p>
           </div>
         </div>
 
@@ -53,13 +69,13 @@ const ReportViewer = ({ report }: ReportViewerProps) => {
             <div className="flex items-center space-x-2">
               <span>Severity:</span>
               <SeverityBadge
-                severity={report.diagnosis.severity || "unknown"}
+                severity={diagnosis?.severity || "unknown"}
                 size="sm"
               />
             </div>
             <p>
               Risk Level:{" "}
-              {formatRiskLevel(report.diagnosis.risk_level || "unknown")}
+              {formatRiskLevel(diagnosis?.risk_level || "unknown")}
             </p>
           </div>
         </div>
@@ -69,32 +85,36 @@ const ReportViewer = ({ report }: ReportViewerProps) => {
         <h3 className="text-sm font-semibold text-gray-900 mb-2">
           Top Predictions
         </h3>
-        <div className="space-y-3">
-          {report.diagnosis.top_predictions
-            .slice(0, 3)
-            .map((prediction, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between text-sm"
-              >
-                <div>
-                  <p className="font-medium text-gray-900">
-                    {prediction.disease}
-                  </p>
-                  <p className="text-gray-600">
-                    Severity:{" "}
-                    {formatSeverityLabel(prediction.severity || "unknown")}
-                  </p>
+        {topPredictions && topPredictions.length > 0 ? (
+          <div className="space-y-3">
+            {topPredictions
+              .slice(0, 3)
+              .map((prediction, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between text-sm"
+                >
+                  <div>
+                    <p className="font-medium text-gray-900">
+                      {prediction?.disease || prediction?.disease_name || "Unknown"}
+                    </p>
+                    <p className="text-gray-600">
+                      Severity:{" "}
+                      {formatSeverityLabel(prediction?.severity || "unknown")}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold text-gray-900">
+                      {((prediction?.confidence || prediction?.confidence_score || 0) * 100).toFixed(1)}%
+                    </p>
+                    <p className="text-xs text-gray-500">Confidence</p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-semibold text-gray-900">
-                    {(prediction.confidence * 100).toFixed(1)}%
-                  </p>
-                  <p className="text-xs text-gray-500">Confidence</p>
-                </div>
-              </div>
-            ))}
-        </div>
+              ))}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-600">No predictions available</p>
+        )}
       </div>
 
       <div className="mb-6">
@@ -104,13 +124,13 @@ const ReportViewer = ({ report }: ReportViewerProps) => {
         <div className="text-sm text-gray-700 space-y-2">
           <p>
             Matched Symptoms:{" "}
-            {report.clinical_findings.symptoms.join(", ") || "None"}
+            {symptoms && symptoms.length > 0 ? symptoms.join(", ") : "None"}
           </p>
-          <p>Rule Alerts: {report.clinical_findings.rule_flags.length}</p>
+          <p>Rule Alerts: {ruleFlags?.length || 0}</p>
         </div>
       </div>
 
-      {report.recommendation && (
+      {report?.recommendation && (
         <div className="mb-6">
           <h3 className="text-sm font-semibold text-gray-900 mb-2">
             Recommendation
@@ -121,7 +141,7 @@ const ReportViewer = ({ report }: ReportViewerProps) => {
         </div>
       )}
 
-      {report.disclaimer && (
+      {report?.disclaimer && (
         <div className="border-t border-gray-200 pt-4">
           <p className="text-xs text-gray-600 leading-relaxed">
             {report.disclaimer}

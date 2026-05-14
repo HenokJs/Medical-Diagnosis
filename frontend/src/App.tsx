@@ -18,6 +18,7 @@ const DiagnosisPage = lazy(() => import("./pages/DiagnosisPage"));
 const ResultsPage = lazy(() => import("./pages/ResultsPage"));
 const ReportsPage = lazy(() => import("./pages/ReportsPage"));
 const StatusPage = lazy(() => import("./pages/StatusPage"));
+const DiseaseGuidePage = lazy(() => import("./pages/DiseaseGuidePage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Create React Query client
@@ -51,6 +52,7 @@ function App() {
                 <Route path={ROUTES.RESULTS} element={<ResultsPage />} />
                 <Route path={ROUTES.REPORTS} element={<ReportsPage />} />
                 <Route path={ROUTES.STATUS} element={<StatusPage />} />
+                <Route path="/disease-guide" element={<DiseaseGuidePage />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>

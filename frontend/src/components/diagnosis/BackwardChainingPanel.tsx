@@ -24,8 +24,25 @@ const BackwardChainingPanel = ({
   allSymptoms,
   explainability 
 }: BackwardChainingPanelProps) => {
-  const matchedSymptoms = explainability?.matched_symptoms || topPrediction.matched_symptoms || [];
+  // Null safety checks
+  if (!topPrediction) {
+    return (
+      <div className="card p-6">
+        <h3 className="text-lg font-semibold text-neutral-900 mb-4 flex items-center">
+          <ArrowLeft className="w-5 h-5 mr-2 text-primary-blue" />
+          Backward Chaining Validation
+        </h3>
+        <div className="flex items-center justify-center h-64 text-neutral-500">
+          <p className="text-sm">No prediction data available for backward chaining</p>
+        </div>
+      </div>
+    );
+  }
+
+  const matchedSymptoms = explainability?.matched_symptoms || topPrediction?.matched_symptoms || [];
   const unmatchedSymptoms = explainability?.unmatched_symptoms || [];
+  const diseaseName = topPrediction?.disease || topPrediction?.disease_name || "Unknown";
+  const confidence = topPrediction?.confidence || topPrediction?.confidence_score || 0;
   
   // Calculate validation metrics
   const totalRequired = matchedSymptoms.length + 3; // Estimate required symptoms
@@ -56,10 +73,10 @@ const BackwardChainingPanel = ({
             <div className="bg-white border border-purple-300 rounded p-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold text-neutral-900">
-                  {topPrediction.disease}
+                  {diseaseName}
                 </span>
                 <span className="text-xs font-semibold text-purple-700 bg-purple-100 px-2 py-1 rounded">
-                  {(topPrediction.confidence * 100).toFixed(1)}% confidence
+                  {(confidence * 100).toFixed(1)}% confidence
                 </span>
               </div>
             </div>

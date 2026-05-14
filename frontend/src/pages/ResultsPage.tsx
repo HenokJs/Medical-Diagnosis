@@ -58,14 +58,13 @@ const ResultsPage = () => {
 
   const { data, timestamp } = currentDiagnosis;
   const {
-    top_predictions,
-    explainability,
-    rule_engine_flags,
-    recommendation,
-    disclaimer,
-    patient_analysis,
-    submitted_symptoms = [],
-  } = data;
+    top_predictions = [],
+    explainability = { matched_symptoms: [], unmatched_symptoms: [], important_features: [] },
+    rule_engine_flags = [],
+    recommendation = null,
+    disclaimer = null,
+    patient_analysis = { severity: "unknown", risk_level: "unknown", symptoms_processed: 0, symptoms_matched: 0 },
+  } = data || {};
 
   const handlePrint = () => {
     window.print();
@@ -80,23 +79,35 @@ const ResultsPage = () => {
     try {
       setReportError(null);
       setReportLoading(true);
+      
+      // Request PDF format
       const response = await reportApi.generate({
         diagnosis_result: data,
         patient_info: patientInfo,
-        format: "json",
+        format: "pdf",
       });
 
-      setReportData(response.data);
-
-      const blob = new Blob([JSON.stringify(response.data, null, 2)], {
-        type: "application/json",
-      });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `${response.data.report_id}.json`;
-      link.click();
-      URL.revokeObjectURL(url);
+      // If response is a blob (PDF), download it
+      if (response.data instanceof Blob) {
+        const url = URL.createObjectURL(response.data);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `diagnosis_report_${Date.now()}.pdf`;
+        link.click();
+        URL.revokeObjectURL(url);
+      } else {
+        // Fallback to JSON
+        setReportData(response.data);
+        const blob = new Blob([JSON.stringify(response.data, null, 2)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${response.data.report_id}.json`;
+        link.click();
+        URL.revokeObjectURL(url);
+      }
     } catch (error) {
       setReportError("Failed to generate report. Please try again.");
     } finally {
@@ -106,6 +117,7 @@ const ResultsPage = () => {
 
   // Get all symptoms for inference visualization
   const allSymptoms = explainability?.matched_symptoms || [];
+  const topPrediction = top_predictions && top_predictions.length > 0 ? top_predictions[0] : null;
 
   return (
     <div className="min-h-screen bg-neutral-50 py-8">
@@ -196,16 +208,22 @@ const ResultsPage = () => {
           <h2 className="section-header">
             Top 3 Differential Diagnoses
           </h2>
-          <div className="grid gap-6">
-            {top_predictions.slice(0, 3).map((prediction, index) => (
-              <DiagnosisCard
-                key={index}
-                prediction={prediction}
-                rank={index + 1}
-                isTopPrediction={index === 0}
-              />
-            ))}
-          </div>
+          {top_predictions && top_predictions.length > 0 ? (
+            <div className="grid gap-6">
+              {top_predictions.slice(0, 3).map((prediction, index) => (
+                <DiagnosisCard
+                  key={index}
+                  prediction={prediction}
+                  rank={index + 1}
+                  isTopPrediction={index === 0}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="card p-6">
+              <p className="text-sm text-neutral-600">No predictions available.</p>
+            </div>
+          )}
         </div>
 
         {/* ACADEMIC REQUIREMENT: Inference Visualization */}
@@ -217,35 +235,52 @@ const ResultsPage = () => {
             {/* Forward Chaining */}
             <ForwardChainingPanel
               symptoms={allSymptoms}
-              ruleFlags={rule_engine_flags}
-              predictions={top_predictions}
+              ruleFlags={rule_engine_flags.map(flag => ({
+                rule: flag.rule_id,
+                type: flag.category,
+                message: flag.explanation
+              }))}
+              predictions={top_predictions.map(pred => ({
+                disease: pred.disease,
+                confidence: pred.confidence
+              }))}
             />
             
             {/* Backward Chaining */}
-            <BackwardChainingPanel
-              topPrediction={top_predictions[0]}
-              allSymptoms={allSymptoms}
-              explainability={explainability}
-            />
+            {topPrediction ? (
+              <BackwardChainingPanel
+                topPrediction={{
+                  disease: topPrediction.disease,
+                  confidence: topPrediction.confidence,
+                  matched_symptoms: explainability.matched_symptoms
+                }}
+                allSymptoms={allSymptoms}
+                explainability={explainability}
+              />
+            ) : (
+              <div className="card p-6">
+                <p className="text-sm text-neutral-600">No top prediction available for backward chaining.</p>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Charts and Visualizations */}
         <div className="grid lg:grid-cols-2 gap-8 mb-8">
-          <ConfidenceChart predictions={top_predictions} />
-          <PredictionRankingChart predictions={top_predictions} />
+          <ConfidenceChart predictions={top_predictions || []} />
+          <PredictionRankingChart predictions={top_predictions || []} />
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8 mb-8">
           <SeverityIndicator
-            severity={patient_analysis?.severity || "unknown"}
-            riskLevel={patient_analysis?.risk_level || "unknown"}
-            symptomsProcessed={patient_analysis?.symptoms_processed}
-            symptomsMatched={patient_analysis?.symptoms_matched}
+            severity={patient_analysis.severity}
+            riskLevel={patient_analysis.risk_level}
+            symptomsProcessed={patient_analysis.symptoms_processed}
+            symptomsMatched={patient_analysis.symptoms_matched}
           />
           <SymptomDistributionChart
-            matchedCount={explainability?.matched_symptoms?.length || 0}
-            unmatchedCount={explainability?.unmatched_symptoms?.length || 0}
+            matchedCount={explainability.matched_symptoms?.length || 0}
+            unmatchedCount={explainability.unmatched_symptoms?.length || 0}
           />
         </div>
 
