@@ -68,11 +68,16 @@ npm run dev
 
 Frontend:
 ```txt
-http://localhost:5173
+http://localhost:3000
 ```
 
 ---
 
+### 5. Database Setup
+Run the script the rootpath
+```bash
+docker-compose up -d
+```
 ## Project Structure
 
 ```txt
@@ -93,3 +98,5 @@ Medical-Diagnosis/
 - Persistent diagnosis sessions
 - Downloadable clinical reports
 - Historical report tracking
+
+---
