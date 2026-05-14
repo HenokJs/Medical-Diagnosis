@@ -1,0 +1,21 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: medical_postgres
+    restart: always
+
+    environment:
+      POSTGRES_USER: medai_user
+      POSTGRES_PASSWORD: medai_password
+      POSTGRES_DB: medical_diagnosis_db
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

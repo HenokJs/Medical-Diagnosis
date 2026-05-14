@@ -1,6 +1,6 @@
 /**
- * Prediction Ranking Chart
- * Horizontal bar chart for top predictions
+ * Confidence Comparison Chart
+ * Professional bar chart using Recharts
  */
 
 import {
@@ -11,20 +11,22 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Cell,
 } from "recharts";
 import type { Prediction } from "@/types";
 
-interface PredictionRankingChartProps {
+interface ConfidenceChartProps {
   predictions: Prediction[];
 }
 
-const PredictionRankingChart = ({
-  predictions,
-}: PredictionRankingChartProps) => {
-  const data = predictions.slice(0, 5).map((pred) => ({
+const ConfidenceChart = ({ predictions }: ConfidenceChartProps) => {
+  const data = predictions.slice(0, 3).map((pred, index) => ({
     name: pred.disease,
     confidence: pred.confidence * 100,
+    rank: index + 1,
   }));
+
+  const colors = ["#0077b6", "#00b4d8", "#90e0ef"];
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
@@ -46,32 +48,41 @@ const PredictionRankingChart = ({
   return (
     <div className="card p-6">
       <h3 className="text-lg font-semibold text-primary-dark mb-4">
-        Prediction Ranking
+        Confidence Comparison
       </h3>
-      <ResponsiveContainer width="100%" height={260}>
+      <ResponsiveContainer width="100%" height={300}>
         <BarChart
           data={data}
-          layout="vertical"
-          margin={{ top: 10, right: 20, left: 20, bottom: 10 }}
+          margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="#90e0ef" />
           <XAxis
-            type="number"
-            domain={[0, 100]}
+            dataKey="name"
+            angle={-45}
+            textAnchor="end"
+            height={100}
             tick={{ fill: "#03045e", fontSize: 12 }}
           />
           <YAxis
-            type="category"
-            dataKey="name"
-            width={140}
+            label={{
+              value: "Confidence (%)",
+              angle: -90,
+              position: "insideLeft",
+              fill: "#03045e",
+            }}
             tick={{ fill: "#03045e", fontSize: 12 }}
+            domain={[0, 100]}
           />
           <Tooltip content={<CustomTooltip />} />
-          <Bar dataKey="confidence" fill="#0077b6" radius={[0, 8, 8, 0]} />
+          <Bar dataKey="confidence" radius={[8, 8, 0, 0]}>
+            {data.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={colors[index]} />
+            ))}
+          </Bar>
         </BarChart>
       </ResponsiveContainer>
     </div>
   );
 };
 
-export default PredictionRankingChart;
+export default ConfidenceChart;

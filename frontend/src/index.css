@@ -1,0 +1,264 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================
+   PROFESSIONAL MEDICAL DESIGN SYSTEM
+   ============================================ */
+
+@layer base {
+  * {
+    @apply border-primary-100;
+  }
+
+  body {
+    @apply bg-white text-primary-dark antialiased;
+    font-feature-settings: "cv11", "ss01";
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-semibold text-primary-dark;
+  }
+}
+
+@layer components {
+  /* ============================================
+     CARD COMPONENTS - Professional Medical Style
+     ============================================ */
+  .card {
+    @apply bg-white rounded-medical border border-neutral-200 shadow-medical;
+  }
+
+  .card-hover {
+    @apply card transition-all duration-200 hover:shadow-medical-lg hover:border-primary-blue;
+  }
+
+  /* ============================================
+     BUTTON COMPONENTS - Clinical Professional
+     ============================================ */
+  .btn {
+    @apply px-4 py-2 rounded-medical font-medium transition-all duration-200 
+           focus:outline-none focus:ring-2 focus:ring-offset-2 
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-primary {
+    @apply bg-primary-blue text-white hover:bg-primary-dark 
+           focus:ring-primary-blue shadow-sm;
+  }
+
+  .btn-secondary {
+    @apply bg-primary-100 text-primary-dark hover:bg-primary-200 
+        focus:ring-primary-200 shadow-sm;
+  }
+
+  .btn-outline {
+    @apply border-2 border-primary-blue text-primary-blue 
+           hover:bg-primary-blue hover:text-white focus:ring-primary-blue;
+  }
+
+  .btn-danger {
+    @apply bg-primary-600 text-white hover:bg-primary-700 
+        focus:ring-primary-600 shadow-sm;
+  }
+
+  /* ============================================
+     INPUT COMPONENTS - Professional Forms
+     ============================================ */
+  .input {
+    @apply w-full px-4 py-2 border border-neutral-300 rounded-medical
+           focus:outline-none focus:ring-2 focus:ring-primary-blue focus:border-transparent
+           transition-all duration-200 bg-white text-neutral-900
+           placeholder:text-neutral-400;
+  }
+
+  .input-error {
+    @apply input border-primary-600 focus:ring-primary-600;
+  }
+
+  /* ============================================
+     BADGE COMPONENTS - Clinical Indicators
+     ============================================ */
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold;
+  }
+
+  .badge-minor {
+    @apply bg-primary-50 text-primary-700 border border-primary-200;
+  }
+
+  .badge-moderate {
+    @apply bg-primary-100 text-primary-800 border border-primary-200;
+  }
+
+  .badge-urgent {
+    @apply bg-primary-200 text-primary-900 border border-primary-300;
+  }
+
+  .badge-critical {
+    @apply bg-primary-300 text-primary-900 border border-primary-400;
+  }
+
+  .badge-info {
+    @apply bg-primary-50 text-primary-700 border border-primary-200;
+  }
+
+  /* ============================================
+     ALERT COMPONENTS - Clinical Notifications
+     ============================================ */
+  .alert {
+    @apply p-4 rounded-medical border;
+  }
+
+  .alert-info {
+    @apply alert bg-primary-50 border-primary-200 text-primary-900;
+  }
+
+  .alert-success {
+    @apply alert bg-primary-50 border-primary-200 text-primary-900;
+  }
+
+  .alert-warning {
+    @apply alert bg-primary-100 border-primary-200 text-primary-900;
+  }
+
+  .alert-danger {
+    @apply alert bg-primary-200 border-primary-300 text-primary-900;
+  }
+
+  /* ============================================
+     MEDICAL SPECIFIC COMPONENTS
+     ============================================ */
+  .diagnosis-card {
+    @apply card p-6 hover:shadow-medical-lg transition-all duration-200;
+  }
+
+  .confidence-bar {
+    @apply h-2 rounded-full bg-primary-100 overflow-hidden;
+  }
+
+  .confidence-fill {
+    @apply h-full transition-all duration-500 ease-out;
+  }
+
+  .symptom-tag {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-sm
+           bg-primary-50 text-primary-dark border border-primary-200
+           transition-all duration-200 hover:bg-primary-100;
+  }
+
+  .symptom-tag-matched {
+    @apply symptom-tag bg-primary-100 border-primary-200 text-primary-900;
+  }
+
+  .symptom-tag-extracted {
+    @apply symptom-tag bg-primary-50 border-primary-200 text-primary-900;
+  }
+
+  /* ============================================
+     SECTION HEADERS - Professional Typography
+     ============================================ */
+  .section-header {
+    @apply text-2xl font-semibold text-primary-dark mb-4 pb-2 
+           border-b-2 border-primary-300;
+  }
+
+  .subsection-header {
+    @apply text-lg font-semibold text-primary-dark mb-3;
+  }
+
+  /* ============================================
+     LOADING STATES
+     ============================================ */
+  .skeleton {
+    @apply bg-primary-100 rounded;
+  }
+
+  @keyframes pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  .animate-slide-in {
+    animation: slideIn 0.4s ease-out;
+  }
+
+  /* ============================================
+     PRINT STYLES - Professional Reports
+     ============================================ */
+  @media print {
+    @page {
+      size: A4;
+      margin: 2cm;
+    }
+
+    body {
+      background: white !important;
+      color: black !important;
+      font-size: 11pt;
+      line-height: 1.5;
+    }
+
+    nav,
+    footer,
+    aside,
+    .print-hidden {
+      display: none !important;
+    }
+
+    .card {
+      border: 1px solid #ddd !important;
+      box-shadow: none !important;
+      page-break-inside: avoid;
+    }
+
+    h1,
+    h2,
+    h3 {
+      page-break-after: avoid;
+    }
+
+    .diagnosis-card {
+      page-break-inside: avoid;
+      margin-bottom: 1cm;
+    }
+
+    /* Ensure colors print correctly */
+    .badge,
+    .alert {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
