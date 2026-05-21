@@ -83,7 +83,8 @@ const ResultsPage = () => {
   const sessionIdFromState = (location.state as { sessionId?: string } | null)
     ?.sessionId;
   const sessionIdFromStorage = sessionStorage.getItem("sessionId");
-  const sessionId = sessionIdFromState || data?.session_id || sessionIdFromStorage;
+  const sessionId =
+    sessionIdFromState || data?.session_id || sessionIdFromStorage;
   const {
     top_predictions = [],
     explainability = {
