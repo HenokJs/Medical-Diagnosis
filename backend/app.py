@@ -85,8 +85,10 @@ def initialize_database(app):
         app.logger.info("Initializing database...")
         init_db(app)
         
-        # Create all tables directly - no migrations folder needed
+        # Import all models so SQLAlchemy knows about them before create_all
         from backend.database import db
+        import backend.models  # adjust this import to match your actual models module
+        
         with app.app_context():
             db.create_all()
             app.logger.info("Database tables created/verified successfully")
