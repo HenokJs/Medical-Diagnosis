@@ -13,6 +13,34 @@ def _split_env_list(value: str) -> list[str]:
     return [item.strip() for item in value.split(",") if item.strip()]
 
 
+def _dedupe(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    result: list[str] = []
+    for value in values:
+        if value and value not in seen:
+            result.append(value)
+            seen.add(value)
+    return result
+
+
+def _build_cors_origins() -> list[str]:
+    env_origins = os.environ.get("CORS_ORIGINS")
+    if env_origins:
+        return _split_env_list(env_origins)
+
+    frontend_url = os.environ.get(
+        "FRONTEND_URL",
+        "https://haramaya-medical-diagnosis-system.vercel.app",
+    )
+
+    defaults = [
+        frontend_url,
+        "http://localhost:3000",
+        "http://localhost:5173",
+    ]
+    return _dedupe(defaults)
+
+
 def _normalize_database_url(value: str | None) -> str | None:
     if not value:
         return None
@@ -56,9 +84,7 @@ class Config:
         "pool_pre_ping": True,
     }
 
-    CORS_ORIGINS = _split_env_list(
-        os.environ.get("CORS_ORIGINS", "http://localhost:5173,http://localhost:3000")
-    )
+    CORS_ORIGINS = _build_cors_origins()
 
     MODEL_DIR = os.environ.get(
         "MODEL_DIR", str(BASE_DIR / "ml" / "saved_models")
