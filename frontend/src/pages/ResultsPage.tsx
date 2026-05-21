@@ -4,7 +4,7 @@
  */
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   Download,
@@ -38,6 +38,7 @@ import type { ReportData } from "@/types";
 
 const ResultsPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { currentDiagnosis, patientInfo } = useDiagnosisStore();
   const [reportError, setReportError] = useState<string | null>(null);
   const [reportLoading, setReportLoading] = useState(false);
@@ -79,6 +80,9 @@ const ResultsPage = () => {
   }
 
   const { data, timestamp } = currentDiagnosis;
+  const sessionIdFromState = (location.state as { sessionId?: string } | null)
+    ?.sessionId;
+  const sessionId = sessionIdFromState || data?.session_id;
   const {
     top_predictions = [],
     explainability = {
@@ -108,7 +112,6 @@ const ResultsPage = () => {
       return;
     }
 
-    const sessionId = data?.session_id;
     if (!sessionId) {
       setReportError("Session ID is required to generate a report.");
       toast.error("Session ID is required to generate a report.");
