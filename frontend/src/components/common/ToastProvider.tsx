@@ -4,13 +4,7 @@
 
 import { createContext, useContext, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import {
-  CheckCircle,
-  XCircle,
-  Info,
-  AlertTriangle,
-  X,
-} from "lucide-react";
+import { CheckCircle, XCircle, Info, AlertTriangle, X } from "lucide-react";
 
 export type ToastType = "success" | "error" | "info" | "warning";
 
@@ -23,7 +17,12 @@ interface ToastItem {
 }
 
 interface ToastContextValue {
-  notify: (type: ToastType, message: string, title?: string, durationMs?: number) => void;
+  notify: (
+    type: ToastType,
+    message: string,
+    title?: string,
+    durationMs?: number,
+  ) => void;
   success: (message: string, title?: string) => void;
   error: (message: string, title?: string) => void;
   info: (message: string, title?: string) => void;
@@ -57,7 +56,7 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
     type: ToastType,
     message: string,
     title?: string,
-    durationMs: number = 3500
+    durationMs: number = 3500,
   ) => {
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const toast: ToastItem = { id, type, message, title, durationMs };
@@ -76,7 +75,7 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
       info: (message, title) => notify("info", message, title),
       warning: (message, title) => notify("warning", message, title),
     }),
-    [notify]
+    [notify],
   );
 
   return (
@@ -95,9 +94,7 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
                   <p className="text-sm font-semibold text-gray-900">
                     {toast.title || "Notification"}
                   </p>
-                  <p className="text-sm text-gray-700 mt-1">
-                    {toast.message}
-                  </p>
+                  <p className="text-sm text-gray-700 mt-1">{toast.message}</p>
                 </div>
               </div>
               <button

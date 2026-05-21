@@ -35,7 +35,7 @@ const ReportsPage = () => {
     openPreview,
     closePreview,
   } = useReportPdf();
-  
+
   // State for database reports
   const [dbReports, setDbReports] = useState<ReportHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,7 +53,7 @@ const ReportsPage = () => {
       setLoading(true);
       setError(null);
       const response = await reportApi.getHistory({ limit: 100 });
-      
+
       if (response && response.data) {
         setDbReports(response.data.history || []);
       }
@@ -202,7 +202,8 @@ const ReportsPage = () => {
                 Diagnosis Reports
               </h1>
               <p className="text-gray-600">
-                {dbReports.length} report{dbReports.length !== 1 ? "s" : ""} in history
+                {dbReports.length} report{dbReports.length !== 1 ? "s" : ""} in
+                history
               </p>
             </div>
 
@@ -237,10 +238,11 @@ const ReportsPage = () => {
         <div className="grid gap-6">
           {dbReports.map((session) => {
             const reportData = session.report_data;
-            const topPrediction = reportData?.diagnosis?.top_predictions?.[0] || null;
+            const topPrediction =
+              reportData?.diagnosis?.top_predictions?.[0] || null;
             const symptoms = reportData?.clinical_findings?.symptoms || [];
             const confidenceValue = topPrediction?.confidence ?? 0;
-            
+
             return (
               <div key={session.report_id} className="card card-hover p-6">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between">
@@ -258,7 +260,7 @@ const ReportsPage = () => {
                         <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 mb-3">
                           <span className="flex items-center">
                             <Calendar className="w-4 h-4 mr-1" />
-                              {formatDateTime(session.generated_at)}
+                            {formatDateTime(session.generated_at)}
                           </span>
                           {topPrediction && (
                             <span className="flex items-center">
@@ -267,19 +269,21 @@ const ReportsPage = () => {
                             </span>
                           )}
                           <span className="inline-flex items-center px-2 py-1 rounded-md bg-blue-100 text-blue-700 text-xs font-medium">
-                              {session.report_id}
+                            {session.report_id}
                           </span>
                         </div>
 
                         <div className="flex flex-wrap gap-2">
-                          {symptoms.slice(0, 5).map((symptom: string, index: number) => (
-                            <span
-                              key={index}
-                              className="inline-flex items-center px-2.5 py-1 rounded-md bg-gray-100 text-gray-700 text-xs font-medium"
-                            >
-                              {symptom}
-                            </span>
-                          ))}
+                          {symptoms
+                            .slice(0, 5)
+                            .map((symptom: string, index: number) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center px-2.5 py-1 rounded-md bg-gray-100 text-gray-700 text-xs font-medium"
+                              >
+                                {symptom}
+                              </span>
+                            ))}
                           {symptoms.length > 5 && (
                             <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-gray-100 text-gray-600 text-xs">
                               +{symptoms.length - 5} more

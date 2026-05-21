@@ -3,7 +3,7 @@
  */
 
 export const getFilenameFromDisposition = (
-  contentDisposition?: string
+  contentDisposition?: string,
 ): string | undefined => {
   if (!contentDisposition) {
     return undefined;
@@ -25,7 +25,7 @@ export const getFilenameFromDisposition = (
 export const downloadBlob = (
   blob: Blob,
   filename: string,
-  mimeType?: string
+  mimeType?: string,
 ) => {
   const safeBlob = new Blob([blob], {
     type: mimeType || blob.type || "application/octet-stream",

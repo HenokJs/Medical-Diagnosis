@@ -13,7 +13,7 @@ import { getFilenameFromDisposition } from "@/utils/fileDownload";
 
 const postJsonWithFallback = async <T>(
   paths: string[],
-  payload: ReportRequest
+  payload: ReportRequest,
 ): Promise<T> => {
   let lastError: unknown = null;
 
@@ -35,7 +35,7 @@ const postJsonWithFallback = async <T>(
 
 const postBlobWithFallback = async (
   paths: string[],
-  payload: ReportRequest
+  payload: ReportRequest,
 ): Promise<{ data: Blob; filename?: string }> => {
   let lastError: unknown = null;
 
@@ -46,7 +46,9 @@ const postBlobWithFallback = async (
       });
       return {
         data: response.data,
-        filename: getFilenameFromDisposition(response.headers["content-disposition"]),
+        filename: getFilenameFromDisposition(
+          response.headers["content-disposition"],
+        ),
       };
     } catch (error: any) {
       lastError = error;
@@ -62,7 +64,7 @@ const postBlobWithFallback = async (
 
 const getWithFallback = async <T>(
   paths: string[],
-  params?: any
+  params?: any,
 ): Promise<T> => {
   let lastError: unknown = null;
 
@@ -84,7 +86,7 @@ const getWithFallback = async <T>(
 
 const getBlobWithFallback = async (
   paths: string[],
-  params?: any
+  params?: any,
 ): Promise<{ data: Blob; filename?: string }> => {
   let lastError: unknown = null;
 
@@ -96,7 +98,9 @@ const getBlobWithFallback = async (
       });
       return {
         data: response.data,
-        filename: getFilenameFromDisposition(response.headers["content-disposition"]),
+        filename: getFilenameFromDisposition(
+          response.headers["content-disposition"],
+        ),
       };
     } catch (error: any) {
       lastError = error;
@@ -117,7 +121,7 @@ export const reportApi = {
   generate: async (payload: ReportRequest): Promise<ReportResponse> => {
     return postJsonWithFallback<ReportResponse>(
       ["/report/generate", "/reports/generate"],
-      payload
+      payload,
     );
   },
 
@@ -125,7 +129,7 @@ export const reportApi = {
    * Generate PDF directly from payload
    */
   generatePdf: async (
-    payload: ReportRequest
+    payload: ReportRequest,
   ): Promise<{ data: Blob; filename?: string }> => {
     return postBlobWithFallback(["/report/generate", "/reports/generate"], {
       ...payload,
@@ -136,10 +140,14 @@ export const reportApi = {
   /**
    * Get report history from database
    */
-  getHistory: async (params?: { patient_id?: string; page?: number; limit?: number }) => {
+  getHistory: async (params?: {
+    patient_id?: string;
+    page?: number;
+    limit?: number;
+  }) => {
     return getWithFallback<ReportHistoryResponse>(
       ["/report/history", "/reports/history"],
-      params
+      params,
     );
   },
 
@@ -147,15 +155,18 @@ export const reportApi = {
    * Get report data by report id
    */
   getById: async (reportId: string) => {
-    return getWithFallback<ReportResponse>(
-      ["/report/" + reportId, "/reports/" + reportId]
-    );
+    return getWithFallback<ReportResponse>([
+      "/report/" + reportId,
+      "/reports/" + reportId,
+    ]);
   },
 
   /**
    * Download PDF by report id
    */
-  downloadPdf: async (reportId: string): Promise<{ data: Blob; filename?: string }> => {
+  downloadPdf: async (
+    reportId: string,
+  ): Promise<{ data: Blob; filename?: string }> => {
     return getBlobWithFallback([
       "/report/" + reportId + "/pdf",
       "/reports/" + reportId + "/pdf",

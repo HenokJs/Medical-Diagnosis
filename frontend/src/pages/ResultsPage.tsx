@@ -41,7 +41,9 @@ const ResultsPage = () => {
   const { currentDiagnosis, patientInfo } = useDiagnosisStore();
   const [reportError, setReportError] = useState<string | null>(null);
   const [reportLoading, setReportLoading] = useState(false);
-  const [reportAction, setReportAction] = useState<"preview" | "download" | null>(null);
+  const [reportAction, setReportAction] = useState<
+    "preview" | "download" | null
+  >(null);
   const [reportData, setReportData] = useState<ReportData | null>(null);
   const toast = useToast();
   const {
@@ -79,11 +81,20 @@ const ResultsPage = () => {
   const { data, timestamp } = currentDiagnosis;
   const {
     top_predictions = [],
-    explainability = { matched_symptoms: [], unmatched_symptoms: [], important_features: [] },
+    explainability = {
+      matched_symptoms: [],
+      unmatched_symptoms: [],
+      important_features: [],
+    },
     rule_engine_flags = [],
     recommendation = null,
     disclaimer = null,
-    patient_analysis = { severity: "unknown", risk_level: "unknown", symptoms_processed: 0, symptoms_matched: 0 },
+    patient_analysis = {
+      severity: "unknown",
+      risk_level: "unknown",
+      symptoms_processed: 0,
+      symptoms_matched: 0,
+    },
   } = data || {};
 
   const handlePrint = () => {
@@ -203,7 +214,8 @@ const ResultsPage = () => {
 
   // Get all symptoms for inference visualization
   const allSymptoms = explainability?.matched_symptoms || [];
-  const topPrediction = top_predictions && top_predictions.length > 0 ? top_predictions[0] : null;
+  const topPrediction =
+    top_predictions && top_predictions.length > 0 ? top_predictions[0] : null;
 
   return (
     <div className="min-h-screen bg-neutral-50 py-8">
@@ -299,9 +311,7 @@ const ResultsPage = () => {
 
         {/* Top-3 Predictions */}
         <div className="mb-8">
-          <h2 className="section-header">
-            Top 3 Differential Diagnoses
-          </h2>
+          <h2 className="section-header">Top 3 Differential Diagnoses</h2>
           {top_predictions && top_predictions.length > 0 ? (
             <div className="grid gap-6">
               {top_predictions.slice(0, 3).map((prediction, index) => (
@@ -315,45 +325,47 @@ const ResultsPage = () => {
             </div>
           ) : (
             <div className="card p-6">
-              <p className="text-sm text-neutral-600">No predictions available.</p>
+              <p className="text-sm text-neutral-600">
+                No predictions available.
+              </p>
             </div>
           )}
         </div>
 
         {/* ACADEMIC REQUIREMENT: Inference Visualization */}
         <div className="mb-8">
-          <h2 className="section-header">
-            Clinical Reasoning & Inference
-          </h2>
+          <h2 className="section-header">Clinical Reasoning & Inference</h2>
           <div className="grid lg:grid-cols-2 gap-8">
             {/* Forward Chaining */}
             <ForwardChainingPanel
               symptoms={allSymptoms}
-              ruleFlags={rule_engine_flags.map(flag => ({
+              ruleFlags={rule_engine_flags.map((flag) => ({
                 rule: flag.rule_id,
                 type: flag.category,
-                message: flag.explanation
+                message: flag.explanation,
               }))}
-              predictions={top_predictions.map(pred => ({
+              predictions={top_predictions.map((pred) => ({
                 disease: pred.disease,
-                confidence: pred.confidence
+                confidence: pred.confidence,
               }))}
             />
-            
+
             {/* Backward Chaining */}
             {topPrediction ? (
               <BackwardChainingPanel
                 topPrediction={{
                   disease: topPrediction.disease,
                   confidence: topPrediction.confidence,
-                  matched_symptoms: explainability.matched_symptoms
+                  matched_symptoms: explainability.matched_symptoms,
                 }}
                 allSymptoms={allSymptoms}
                 explainability={explainability}
               />
             ) : (
               <div className="card p-6">
-                <p className="text-sm text-neutral-600">No top prediction available for backward chaining.</p>
+                <p className="text-sm text-neutral-600">
+                  No top prediction available for backward chaining.
+                </p>
               </div>
             )}
           </div>
@@ -381,9 +393,7 @@ const ResultsPage = () => {
         <div className="grid lg:grid-cols-2 gap-8 mb-8">
           <ExplainabilityPanel explainability={explainability} />
           <div>
-            <h3 className="subsection-header">
-              Report Preview
-            </h3>
+            <h3 className="subsection-header">Report Preview</h3>
             {reportLoading && reportAction === "preview" ? (
               <LoadingSpinner text="Generating report preview..." />
             ) : reportData ? (
@@ -401,9 +411,7 @@ const ResultsPage = () => {
         {/* Recommendations */}
         {recommendation && (
           <div className="card p-6 mb-8">
-            <h3 className="subsection-header">
-              Clinical Recommendations
-            </h3>
+            <h3 className="subsection-header">Clinical Recommendations</h3>
             <div className="space-y-3">
               <div className="flex items-start space-x-3">
                 <div className="w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0 mt-0.5">
