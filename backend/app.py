@@ -84,6 +84,13 @@ def initialize_database(app):
     try:
         app.logger.info("Initializing database...")
         init_db(app)
+        
+        # Create all tables directly - no migrations folder needed
+        from backend.database import db
+        with app.app_context():
+            db.create_all()
+            app.logger.info("Database tables created/verified successfully")
+        
         app.logger.info("Database initialized successfully")
         
     except Exception as e:
