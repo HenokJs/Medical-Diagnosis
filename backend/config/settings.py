@@ -1,6 +1,7 @@
 import os
 from datetime import timedelta
 from pathlib import Path
+from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 
 BASE_DIR = Path(__file__).resolve().parents[2]
@@ -12,6 +13,31 @@ def _split_env_list(value: str) -> list[str]:
     return [item.strip() for item in value.split(",") if item.strip()]
 
 
+def _normalize_database_url(value: str | None) -> str | None:
+    if not value:
+        return None
+
+    normalized = value
+    if normalized.startswith("postgres://"):
+        normalized = "postgresql://" + normalized[len("postgres://") :]
+
+    if normalized.startswith("sqlite://"):
+        return normalized
+
+    parsed = urlparse(normalized)
+    if not parsed.scheme.startswith("postgresql"):
+        return normalized
+
+    query = dict(parse_qsl(parsed.query, keep_blank_values=True))
+    hostname = parsed.hostname or ""
+    if hostname.endswith("neon.tech") and "sslmode" not in query:
+        query["sslmode"] = "require"
+        parsed = parsed._replace(query=urlencode(query))
+        return urlunparse(parsed)
+
+    return normalized
+
+
 class Config:
     APP_NAME = "Medical Diagnosis AI System"
     VERSION = "1.0.0"
@@ -19,7 +45,9 @@ class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY")
     JSON_SORT_KEYS = False
 
-    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
+    SQLALCHEMY_DATABASE_URI = _normalize_database_url(
+        os.environ.get("DATABASE_URL")
+    )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ECHO = False
     SQLALCHEMY_ENGINE_OPTIONS = {

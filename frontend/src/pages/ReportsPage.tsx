@@ -13,24 +13,34 @@ import {
   Download,
   RefreshCw,
 } from "lucide-react";
-import { useDiagnosisStore } from "@/store/diagnosisStore";
 import { formatDateTime, formatConfidence } from "@/utils/formatters";
 import EmptyState from "@/components/common/EmptyState";
 import { ROUTES } from "@/constants";
 import reportApi from "@/api/reportApi";
 import ErrorAlert from "@/components/common/ErrorAlert";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
-import type { DiagnosisResponse } from "@/types";
+import ReportPdfModal from "@/components/reports/ReportPdfModal";
+import { downloadBlob } from "@/utils/fileDownload";
+import { useReportPdf, useToast } from "@/hooks";
+import type { ReportHistoryItem } from "@/types";
 
 const ReportsPage = () => {
   const navigate = useNavigate();
-  const { setCurrentDiagnosis } = useDiagnosisStore();
+  const toast = useToast();
+  const {
+    previewOpen,
+    previewUrl,
+    previewLoading,
+    activeReportId,
+    openPreview,
+    closePreview,
+  } = useReportPdf();
   
   // State for database reports
-  const [dbReports, setDbReports] = useState<any[]>([]);
+  const [dbReports, setDbReports] = useState<ReportHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [reportLoading, setReportLoading] = useState(false);
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [reportError, setReportError] = useState<string | null>(null);
 
   // Fetch reports from database on mount
@@ -48,91 +58,82 @@ const ReportsPage = () => {
         setDbReports(response.data.history || []);
       }
     } catch (err: any) {
-      console.error("Failed to fetch reports:", err);
+      toast.error("Failed to load report history.");
       setError("Failed to load report history. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleViewDetails = (session: any) => {
-    // Reconstruct diagnosis object for viewing - must match DiagnosisResponse structure
-    const diagnosis: DiagnosisResponse = {
-      success: true,
-      message: "Diagnosis retrieved from history",
-      data: {
-        success: true,
-        top_predictions: session.predictions || [],
-        explainability: {
-          matched_symptoms: session.extracted_symptoms?.filter((s: any) => s.matched_in_model).map((s: any) => s.symptom_name) || [],
-          unmatched_symptoms: session.extracted_symptoms?.filter((s: any) => !s.matched_in_model).map((s: any) => s.symptom_name) || [],
-          important_features: [],
-        },
-        rule_engine_flags: session.rule_alerts || [],
-        patient_analysis: {
-          severity: session.overall_severity || "unknown",
-          risk_level: session.risk_level || "unknown",
-          symptoms_processed: session.symptoms_processed || 0,
-          symptoms_matched: session.symptoms_matched || 0,
-        },
-      },
-      timestamp: session.created_at,
-    };
-    
-    setCurrentDiagnosis(diagnosis);
-    navigate(ROUTES.RESULTS);
-  };
+  const handleViewReport = async (report: ReportHistoryItem) => {
+    if (!report.report_id) {
+      toast.error("Report identifier is missing.");
+      return;
+    }
 
-  const handleDownloadPDF = async (session: any) => {
     try {
       setReportError(null);
-      setReportLoading(true);
-      
-      // Prepare data for PDF generation - must match DiagnosisData structure
-      const diagnosisData = {
-        success: true,
-        top_predictions: session.predictions || [],
-        explainability: {
-          matched_symptoms: session.extracted_symptoms?.filter((s: any) => s.matched_in_model).map((s: any) => s.symptom_name) || [],
-          unmatched_symptoms: session.extracted_symptoms?.filter((s: any) => !s.matched_in_model).map((s: any) => s.symptom_name) || [],
-          important_features: [],
-        },
-        rule_engine_flags: session.rule_alerts || [],
-        patient_analysis: {
-          severity: session.overall_severity || "unknown",
-          risk_level: session.risk_level || "unknown",
-          symptoms_processed: session.symptoms_processed || 0,
-          symptoms_matched: session.symptoms_matched || 0,
-        },
-      };
-      
-      const patientInfo = {
-        age: session.patient?.age || 0,
-        gender: session.patient?.gender || "unknown",
-        patient_id: session.patient?.patient_id,
-      };
-      
-      const response = await reportApi.generate({
-        diagnosis_result: diagnosisData,
-        patient_info: patientInfo,
-        format: "pdf",
-      });
+      setActionLoadingId(report.report_id);
+      await openPreview(report.report_id);
+      toast.success("Report preview is ready.", "Preview opened");
+    } catch (err) {
+      toast.error("Failed to open report preview.");
+      setReportError("Failed to open report preview. Please try again.");
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
 
-      // If response is a blob (PDF), download it
-      if (response.data instanceof Blob) {
-        const url = URL.createObjectURL(response.data);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `diagnosis_report_${session.session_id}.pdf`;
-        link.click();
-        URL.revokeObjectURL(url);
+  const handleDownloadPDF = async (report: ReportHistoryItem) => {
+    try {
+      setReportError(null);
+      if (!report.report_id) {
+        throw new Error("Report identifier is missing");
       }
+
+      setActionLoadingId(report.report_id);
+      const response = await reportApi.downloadPdf(report.report_id);
+      const filename = response.filename || `${report.report_id}.pdf`;
+      downloadBlob(response.data, filename, "application/pdf");
+      toast.success("Report downloaded successfully.", "Download complete");
     } catch (error) {
-      console.error("PDF generation error:", error);
+      toast.error("Failed to download PDF report.");
       setReportError("Failed to generate PDF. Please try again.");
     } finally {
-      setReportLoading(false);
+      setActionLoadingId(null);
     }
+  };
+
+  const handleModalDownload = async () => {
+    if (!activeReportId) {
+      return;
+    }
+
+    try {
+      const response = await reportApi.downloadPdf(activeReportId);
+      const filename = response.filename || `${activeReportId}.pdf`;
+      downloadBlob(response.data, filename, "application/pdf");
+      toast.success("Report downloaded successfully.", "Download complete");
+    } catch (error) {
+      toast.error("Failed to download PDF report.");
+    }
+  };
+
+  const handleModalPrint = () => {
+    if (!previewUrl) {
+      return;
+    }
+
+    const printWindow = window.open(previewUrl, "_blank");
+    if (!printWindow) {
+      toast.error("Unable to open print preview. Please allow popups.");
+      return;
+    }
+
+    printWindow.onload = () => {
+      printWindow.focus();
+      printWindow.print();
+    };
   };
 
   if (loading) {
@@ -235,13 +236,13 @@ const ReportsPage = () => {
         {/* Reports Grid */}
         <div className="grid gap-6">
           {dbReports.map((session) => {
-            const topPrediction = session.predictions && session.predictions.length > 0 
-              ? session.predictions[0] 
-              : null;
-            const symptoms = session.extracted_symptoms?.map((s: any) => s.symptom_name) || [];
+            const reportData = session.report_data;
+            const topPrediction = reportData?.diagnosis?.top_predictions?.[0] || null;
+            const symptoms = reportData?.clinical_findings?.symptoms || [];
+            const confidenceValue = topPrediction?.confidence ?? 0;
             
             return (
-              <div key={session.id} className="card card-hover p-6">
+              <div key={session.report_id} className="card card-hover p-6">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                   <div className="flex-1">
                     <div className="flex items-start space-x-4">
@@ -251,22 +252,22 @@ const ReportsPage = () => {
 
                       <div className="flex-1">
                         <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                          {topPrediction?.disease_name || "Diagnosis Session"}
+                          {topPrediction?.disease || "Diagnosis Session"}
                         </h3>
 
                         <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 mb-3">
                           <span className="flex items-center">
                             <Calendar className="w-4 h-4 mr-1" />
-                            {formatDateTime(session.created_at)}
+                              {formatDateTime(session.generated_at)}
                           </span>
                           {topPrediction && (
                             <span className="flex items-center">
                               <TrendingUp className="w-4 h-4 mr-1" />
-                              {formatConfidence(topPrediction.confidence_score)} confidence
+                              {formatConfidence(confidenceValue)} confidence
                             </span>
                           )}
                           <span className="inline-flex items-center px-2 py-1 rounded-md bg-blue-100 text-blue-700 text-xs font-medium">
-                            {session.session_id}
+                              {session.report_id}
                           </span>
                         </div>
 
@@ -291,19 +292,22 @@ const ReportsPage = () => {
 
                   <div className="flex items-center space-x-3 mt-4 md:mt-0 md:ml-4">
                     <button
-                      onClick={() => handleViewDetails(session)}
+                      onClick={() => handleViewReport(session)}
                       className="btn btn-outline flex items-center"
+                      disabled={actionLoadingId === session.report_id}
                     >
                       <Eye className="w-4 h-4 mr-2" />
-                      View Details
+                      View Report
                     </button>
                     <button
                       onClick={() => handleDownloadPDF(session)}
                       className="btn btn-secondary flex items-center"
-                      disabled={reportLoading}
+                      disabled={actionLoadingId === session.report_id}
                     >
                       <Download className="w-4 h-4 mr-2" />
-                      Download PDF
+                      {actionLoadingId === session.report_id
+                        ? "Preparing..."
+                        : "Download PDF"}
                     </button>
                   </div>
                 </div>
@@ -312,6 +316,16 @@ const ReportsPage = () => {
           })}
         </div>
       </div>
+
+      <ReportPdfModal
+        open={previewOpen}
+        pdfUrl={previewUrl}
+        loading={previewLoading}
+        onClose={closePreview}
+        onDownload={handleModalDownload}
+        onPrint={handleModalPrint}
+        title="Report Preview"
+      />
     </div>
   );
 };

@@ -5,7 +5,14 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Download, Printer, Clock, AlertCircle } from "lucide-react";
+import {
+  ArrowLeft,
+  Download,
+  Printer,
+  Clock,
+  AlertCircle,
+  Eye,
+} from "lucide-react";
 import { useDiagnosisStore } from "@/store/diagnosisStore";
 import { ROUTES, MEDICAL_DISCLAIMER } from "@/constants";
 import { formatDateTime } from "@/utils/formatters";
@@ -22,8 +29,11 @@ import EmptyState from "@/components/common/EmptyState";
 import ErrorAlert from "@/components/common/ErrorAlert";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
 import ReportViewer from "@/components/reports/ReportViewer";
+import ReportPdfModal from "@/components/reports/ReportPdfModal";
 import reportApi from "@/api/reportApi";
 import { FileQuestion } from "lucide-react";
+import { downloadBlob } from "@/utils/fileDownload";
+import { useReportPdf, useToast } from "@/hooks";
 import type { ReportData } from "@/types";
 
 const ResultsPage = () => {
@@ -31,7 +41,17 @@ const ResultsPage = () => {
   const { currentDiagnosis, patientInfo } = useDiagnosisStore();
   const [reportError, setReportError] = useState<string | null>(null);
   const [reportLoading, setReportLoading] = useState(false);
+  const [reportAction, setReportAction] = useState<"preview" | "download" | null>(null);
   const [reportData, setReportData] = useState<ReportData | null>(null);
+  const toast = useToast();
+  const {
+    previewOpen,
+    previewUrl,
+    previewLoading,
+    activeReportId,
+    openPreview,
+    closePreview,
+  } = useReportPdf();
 
   // Redirect if no diagnosis
   if (!currentDiagnosis) {
@@ -70,49 +90,115 @@ const ResultsPage = () => {
     window.print();
   };
 
-  const handleDownload = async () => {
+  const ensureReportData = async () => {
     if (!patientInfo) {
       setReportError("Patient information is required to generate a report.");
+      toast.error("Patient information is required to generate a report.");
+      return;
+    }
+
+    const sessionId = data?.session_id;
+    if (!sessionId) {
+      setReportError("Session ID is required to generate a report.");
+      toast.error("Session ID is required to generate a report.");
+      return;
+    }
+
+    if (reportData) {
+      return reportData;
+    }
+
+    const response = await reportApi.generate({
+      diagnosis_result: data,
+      patient_info: patientInfo,
+      format: "json",
+      session_id: sessionId,
+    });
+
+    if (!response?.data) {
+      throw new Error("Report generation failed");
+    }
+
+    setReportData(response.data);
+    return response.data;
+  };
+
+  const handleViewReport = async () => {
+    try {
+      setReportError(null);
+      setReportLoading(true);
+      setReportAction("preview");
+
+      const report = await ensureReportData();
+      if (!report?.report_id) {
+        return;
+      }
+
+      await openPreview(report.report_id);
+      toast.success("Report preview is ready.", "Preview opened");
+    } catch (error) {
+      toast.error("Failed to open report preview.");
+      setReportError("Failed to open report preview. Please try again.");
+    } finally {
+      setReportLoading(false);
+      setReportAction(null);
+    }
+  };
+
+  const handleDownload = async () => {
+    try {
+      setReportError(null);
+      setReportLoading(true);
+      setReportAction("download");
+
+      const report = await ensureReportData();
+      if (!report?.report_id) {
+        return;
+      }
+
+      const response = await reportApi.downloadPdf(report.report_id);
+      const filename = response.filename || `${report.report_id}.pdf`;
+      downloadBlob(response.data, filename, "application/pdf");
+      toast.success("Report downloaded successfully.", "Download complete");
+    } catch (error) {
+      toast.error("Failed to download PDF report.");
+      setReportError("Failed to generate report. Please try again.");
+    } finally {
+      setReportLoading(false);
+      setReportAction(null);
+    }
+  };
+
+  const handleModalDownload = async () => {
+    if (!activeReportId) {
       return;
     }
 
     try {
-      setReportError(null);
-      setReportLoading(true);
-      
-      // Request PDF format
-      const response = await reportApi.generate({
-        diagnosis_result: data,
-        patient_info: patientInfo,
-        format: "pdf",
-      });
-
-      // If response is a blob (PDF), download it
-      if (response.data instanceof Blob) {
-        const url = URL.createObjectURL(response.data);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `diagnosis_report_${Date.now()}.pdf`;
-        link.click();
-        URL.revokeObjectURL(url);
-      } else {
-        // Fallback to JSON
-        setReportData(response.data);
-        const blob = new Blob([JSON.stringify(response.data, null, 2)], {
-          type: "application/json",
-        });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `${response.data.report_id}.json`;
-        link.click();
-        URL.revokeObjectURL(url);
-      }
+      const response = await reportApi.downloadPdf(activeReportId);
+      const filename = response.filename || `${activeReportId}.pdf`;
+      downloadBlob(response.data, filename, "application/pdf");
+      toast.success("Report downloaded successfully.", "Download complete");
     } catch (error) {
-      setReportError("Failed to generate report. Please try again.");
-    } finally {
-      setReportLoading(false);
+      toast.error("Failed to download PDF report.");
     }
+  };
+
+  const handleModalPrint = () => {
+    if (!previewUrl) {
+      return;
+    }
+
+    const printWindow = window.open(previewUrl, "_blank");
+    if (!printWindow) {
+      toast.error("Unable to open print preview. Please allow popups.");
+      return;
+    }
+
+    printWindow.onload = () => {
+      printWindow.focus();
+      printWindow.print();
+    };
   };
 
   // Get all symptoms for inference visualization
@@ -159,12 +245,20 @@ const ResultsPage = () => {
                 Print
               </button>
               <button
+                onClick={handleViewReport}
+                className="btn btn-outline flex items-center"
+                disabled={reportLoading}
+              >
+                <Eye className="w-4 h-4 mr-2" />
+                {reportAction === "preview" ? "Generating..." : "View Report"}
+              </button>
+              <button
                 onClick={handleDownload}
                 className="btn btn-secondary flex items-center"
                 disabled={reportLoading}
               >
                 <Download className="w-4 h-4 mr-2" />
-                {reportLoading ? "Generating..." : "Download Report"}
+                {reportAction === "download" ? "Preparing..." : "Download PDF"}
               </button>
             </div>
           </div>
@@ -290,7 +384,7 @@ const ResultsPage = () => {
             <h3 className="subsection-header">
               Report Preview
             </h3>
-            {reportLoading ? (
+            {reportLoading && reportAction === "preview" ? (
               <LoadingSpinner text="Generating report preview..." />
             ) : reportData ? (
               <ReportViewer report={reportData} />
@@ -350,6 +444,16 @@ const ResultsPage = () => {
           </p>
         </div>
       </div>
+
+      <ReportPdfModal
+        open={previewOpen}
+        pdfUrl={previewUrl}
+        loading={previewLoading}
+        onClose={closePreview}
+        onDownload={handleModalDownload}
+        onPrint={handleModalPrint}
+        title="Report Preview"
+      />
     </div>
   );
 };

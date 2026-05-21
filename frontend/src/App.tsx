@@ -8,6 +8,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Layout from "./components/layout/Layout";
 import { ROUTES } from "./constants";
 import ErrorBoundary from "./components/common/ErrorBoundary";
+import { ToastProvider } from "./components/common/ToastProvider";
 
 // Lazy load pages for better performance
 import { lazy, Suspense } from "react";
@@ -42,23 +43,25 @@ const PageLoader = () => (
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ErrorBoundary>
-        <Router>
-          <Layout>
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
-                <Route path={ROUTES.HOME} element={<Dashboard />} />
-                <Route path={ROUTES.DIAGNOSIS} element={<DiagnosisPage />} />
-                <Route path={ROUTES.RESULTS} element={<ResultsPage />} />
-                <Route path={ROUTES.REPORTS} element={<ReportsPage />} />
-                <Route path={ROUTES.STATUS} element={<StatusPage />} />
-                <Route path="/disease-guide" element={<DiseaseGuidePage />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Suspense>
-          </Layout>
-        </Router>
-      </ErrorBoundary>
+      <ToastProvider>
+        <ErrorBoundary>
+          <Router>
+            <Layout>
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  <Route path={ROUTES.HOME} element={<Dashboard />} />
+                  <Route path={ROUTES.DIAGNOSIS} element={<DiagnosisPage />} />
+                  <Route path={ROUTES.RESULTS} element={<ResultsPage />} />
+                  <Route path={ROUTES.REPORTS} element={<ReportsPage />} />
+                  <Route path={ROUTES.STATUS} element={<StatusPage />} />
+                  <Route path="/disease-guide" element={<DiseaseGuidePage />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
+            </Layout>
+          </Router>
+        </ErrorBoundary>
+      </ToastProvider>
     </QueryClientProvider>
   );
 }

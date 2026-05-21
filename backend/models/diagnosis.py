@@ -61,6 +61,7 @@ class DiagnosisSession(db.Model):
             data['extracted_symptoms'] = [s.to_dict() for s in self.extracted_symptoms]
             data['predictions'] = [p.to_dict() for p in self.predictions.order_by(DiagnosisPrediction.rank)]
             data['rule_alerts'] = [a.to_dict() for a in self.rule_alerts]
+            data['reports'] = [r.to_dict() for r in self.reports]
         
         return data
 

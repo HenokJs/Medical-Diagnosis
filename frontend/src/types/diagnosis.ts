@@ -81,6 +81,7 @@ export interface PatientAnalysis {
 
 export interface DiagnosisData {
   success: boolean;
+  session_id?: string;
   patient_analysis: PatientAnalysis;
   top_predictions: Prediction[];
   explainability: Explainability;
@@ -138,10 +139,14 @@ export interface ReportRequest {
   diagnosis_result: DiagnosisData;
   patient_info: PatientInfo;
   format?: "json" | "html" | "pdf";
+  session_id?: string;
 }
 
 export interface ReportData {
   report_id: string;
+  session_id?: string | null;
+  report_type?: string;
+  format?: "json" | "html" | "pdf";
   generated_at: string;
   patient_info: PatientInfo;
   diagnosis: {
@@ -159,3 +164,22 @@ export interface ReportData {
 }
 
 export type ReportResponse = ApiResponse<ReportData>;
+
+export interface ReportHistoryItem {
+  report_id: string;
+  session_id?: string | null;
+  report_type?: string;
+  format?: "json" | "html" | "pdf";
+  generated_at: string;
+  updated_at?: string | null;
+  report_data?: ReportData;
+}
+
+export interface ReportHistoryPayload {
+  history: ReportHistoryItem[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export type ReportHistoryResponse = ApiResponse<ReportHistoryPayload>;

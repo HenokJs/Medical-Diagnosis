@@ -36,7 +36,8 @@ class Report(db.Model):
         data = {
             'id': self.id,
             'report_id': self.report_id,
-            'session_id': self.session_id,
+            'session_id': self.session.session_id if self.session else None,
+            'session_db_id': self.session_id,
             'report_type': self.report_type,
             'format': self.format,
             'file_path': self.file_path,

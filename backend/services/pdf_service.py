@@ -4,7 +4,6 @@ Generates professional medical reports in PDF format
 """
 
 import logging
-import os
 from datetime import datetime
 from typing import Dict, Optional
 from io import BytesIO
@@ -37,10 +36,10 @@ class PDFService:
             logger.warning("PDF service initialized but ReportLab is not available")
     
     def generate_pdf(
-        self, 
-        report_data: Dict, 
+        self,
+        report_data: Dict,
         output_path: str = None
-    ) -> Optional[str]:
+    ) -> Optional[BytesIO | str]:
         """
         Generate PDF report from report data.
         
@@ -49,7 +48,7 @@ class PDFService:
             output_path: Optional output file path. If None, generates in memory.
             
         Returns:
-            File path if saved, None if error
+            BytesIO buffer if generated in memory, file path if saved, None if error
         """
         if not self.available:
             logger.error("Cannot generate PDF: ReportLab not installed")
@@ -115,8 +114,9 @@ class PDFService:
             if output_path:
                 logger.info(f"PDF generated successfully: {output_path}")
                 return output_path
-            else:
-                return buffer.getvalue()
+
+            buffer.seek(0)
+            return buffer
                 
         except Exception as e:
             logger.error(f"Failed to generate PDF: {e}")

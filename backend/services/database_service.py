@@ -276,6 +276,54 @@ class DatabaseService:
         except Exception as e:
             logger.error(f"Failed to get diagnosis history: {e}")
             return {"total": 0, "items": []}
+
+    def get_report_history(
+        self, patient_id: str = None, page: int = 1, limit: int = 50
+    ) -> Dict:
+        """
+        Get report history with optional patient filtering.
+        """
+        if not self.db_available:
+            return {"total": 0, "items": []}
+
+        try:
+            query = self.Report.query.join(self.DiagnosisSession)
+
+            if patient_id:
+                patient = self.Patient.query.filter_by(patient_id=patient_id).first()
+                if not patient:
+                    return {"total": 0, "items": []}
+                query = query.filter(self.DiagnosisSession.patient_id == patient.id)
+
+            total = query.count()
+            reports = (
+                query.order_by(self.Report.generated_at.desc())
+                .offset((page - 1) * limit)
+                .limit(limit)
+                .all()
+            )
+
+            return {
+                "total": total,
+                "items": [report.to_dict(include_data=True) for report in reports],
+            }
+        except Exception as e:
+            logger.error(f"Failed to get report history: {e}")
+            return {"total": 0, "items": []}
+
+    def get_report_by_id(self, report_id: str) -> Optional[Dict]:
+        """
+        Get report by report_id.
+        """
+        if not self.db_available:
+            return None
+
+        try:
+            report = self.Report.query.filter_by(report_id=report_id).first()
+            return report.to_dict(include_data=True) if report else None
+        except Exception as e:
+            logger.error(f"Failed to get report: {e}")
+            return None
     
     def get_session_by_id(self, session_id: str) -> Optional[Dict]:
         """
