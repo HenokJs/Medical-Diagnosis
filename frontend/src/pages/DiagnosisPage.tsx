@@ -37,6 +37,9 @@ const DiagnosisPage = () => {
       addToHistory(data);
       setPatientInfo(patientData);
       const sessionId = data?.data?.session_id;
+      if (sessionId) {
+        sessionStorage.setItem("sessionId", sessionId);
+      }
       navigate(ROUTES.RESULTS, {
         state: sessionId ? { sessionId } : undefined,
       });

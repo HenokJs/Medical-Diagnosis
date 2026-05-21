@@ -82,7 +82,8 @@ const ResultsPage = () => {
   const { data, timestamp } = currentDiagnosis;
   const sessionIdFromState = (location.state as { sessionId?: string } | null)
     ?.sessionId;
-  const sessionId = sessionIdFromState || data?.session_id;
+  const sessionIdFromStorage = sessionStorage.getItem("sessionId");
+  const sessionId = sessionIdFromState || data?.session_id || sessionIdFromStorage;
   const {
     top_predictions = [],
     explainability = {
